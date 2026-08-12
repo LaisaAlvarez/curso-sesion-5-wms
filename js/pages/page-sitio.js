@@ -14,12 +14,6 @@ function fmtNum(v) {
   return typeof v === 'number' ? (Number.isInteger(v) ? String(v) : v.toFixed(2)) : v;
 }
 
-function countryClass(country) {
-  if (country === 'Mexico' || country === 'México') return 'mexico';
-  if (country === 'Colombia') return 'colombia';
-  return '';
-}
-
 function siteOptions(model, selectedBrewery) {
   const groups = new Map();
   for (const s of model.sites) {
@@ -84,7 +78,6 @@ function renderPhaseDetailTable(model, timeline) {
 function renderSite(model, brewery) {
   const site = model.sites.find((s) => s.brewery === brewery);
   const timeline = computeSiteTimeline(model, site);
-  const cls = countryClass(site.country);
 
   const ganttRows = timeline.phases.map((phase) => ({
     label: `${phase.sequence}. ${phase.name}`,
@@ -93,7 +86,7 @@ function renderSite(model, brewery) {
         startWeek: phase.startWeek,
         endWeek: phase.endWeek,
         milestone: phase.isMilestone,
-        colorClass: timeline.hasResourceData ? cls : 'sin-datos',
+        colorClass: timeline.hasResourceData ? '' : 'sin-datos',
         tooltip: `${phase.name}: S${phase.startWeek}–S${phase.endWeek} (${phase.durationWeeks} sem)`,
       },
     ],
@@ -101,7 +94,7 @@ function renderSite(model, brewery) {
 
   const warningBanner = timeline.hasResourceData
     ? ''
-    : `<div class="error-banner" style="color:var(--warn);border-color:var(--warn);background:color-mix(in srgb, var(--warn) 15%, transparent)">
+    : `<div class="warning-item alto" style="margin-bottom:16px;">
          Clúster ${site.cluster} no tiene datos de asignación de recursos en el Excel fuente — este sitio se
          excluye del cálculo de choques de recursos y de costo de nómina hasta que se agreguen esas filas.
        </div>`;
@@ -115,7 +108,12 @@ function renderSite(model, brewery) {
     ${renderProfileCard(site)}
     <h2>Línea de tiempo (madurez ${timeline.maturity}, arranque semana ${timeline.startWeek})</h2>
     <div class="panel">
-      ${renderGanttSVG({ rows: ganttRows, totalWeeks: Math.max(timeline.finishWeek, 1), title: `Gantt ${brewery}` })}
+      ${renderGanttSVG({
+        rows: ganttRows,
+        totalWeeks: Math.max(timeline.finishWeek, 1),
+        title: `Gantt ${brewery}`,
+        weeksPerMonth: CONFIG.WEEKS_PER_MONTH,
+      })}
     </div>
     <h2>Detalle de fases y recursos</h2>
     <div class="panel">

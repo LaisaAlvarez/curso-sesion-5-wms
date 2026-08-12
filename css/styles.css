@@ -1,120 +1,197 @@
+/* ============================================================
+   Design tokens — paleta validada (dataviz skill, palette.md)
+   Categorico: slot 1 (azul) = Mexico, slot 2 (naranja) = Colombia
+   Estado: good/warning/serious/critical — NUNCA usado para identidad
+   ============================================================ */
 :root {
-  --bg: #0f1115;
-  --bg-panel: #171a21;
-  --bg-panel-2: #1e222b;
-  --border: #2a2f3a;
-  --text: #e7e9ee;
-  --text-dim: #9aa2b1;
-  --accent: #4f8dfd;
-  --mexico: #3aa3ff;
-  --colombia: #ffb020;
-  --warn: #ffb020;
-  --danger: #ff5d5d;
-  --ok: #3ecf8e;
-  --radius: 10px;
-  font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  color-scheme: light;
+  --surface-1: #fcfcfb;
+  --surface-2: #f3f2ef;
+  --page-plane: #f9f9f7;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #898781;
+  --gridline: #e1e0d9;
+  --baseline: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.10);
+
+  --series-mexico: #2a78d6;
+  --series-colombia: #eb6834;
+
+  --status-good: #0ca30c;
+  --status-warning: #fab219;
+  --status-serious: #ec835a;
+  --status-critical: #d03b3b;
+  --status-good-text: #006300;
+
+  --accent: var(--series-mexico);
+  --radius: 12px;
+  --radius-sm: 8px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    --bg: #f5f6f8;
-    --bg-panel: #ffffff;
-    --bg-panel-2: #f0f1f4;
-    --border: #dde1e8;
-    --text: #1a1d24;
-    --text-dim: #5b6472;
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --surface-1: #1a1a19;
+    --surface-2: #232322;
+    --page-plane: #0d0d0d;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #898781;
+    --gridline: #2c2c2a;
+    --baseline: #383835;
+    --border: rgba(255, 255, 255, 0.10);
+    --series-mexico: #3987e5;
+    --series-colombia: #d95926;
+    --status-good-text: #0ca30c;
   }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface-1: #1a1a19;
+  --surface-2: #232322;
+  --page-plane: #0d0d0d;
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted: #898781;
+  --gridline: #2c2c2a;
+  --baseline: #383835;
+  --border: rgba(255, 255, 255, 0.10);
+  --series-mexico: #3987e5;
+  --series-colombia: #d95926;
+  --status-good-text: #0ca30c;
 }
 
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  background: var(--bg);
-  color: var(--text);
+  background: var(--page-plane);
+  color: var(--text-primary);
   font-size: 15px;
-  line-height: 1.5;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
 }
 
-a { color: var(--accent); text-decoration: none; }
+a { color: var(--series-mexico); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
+/* ---------- Navegacion ---------- */
 header.app-nav {
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 12px 24px;
-  background: var(--bg-panel);
+  gap: 22px;
+  padding: 13px 24px;
+  background: var(--surface-1);
   border-bottom: 1px solid var(--border);
   flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 header.app-nav .brand {
   font-weight: 700;
-  margin-right: 8px;
+  letter-spacing: -0.01em;
+  margin-right: 4px;
+  color: var(--text-primary);
 }
 
-header.app-nav nav {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-}
+header.app-nav nav { display: flex; gap: 18px; flex-wrap: wrap; }
 
-header.app-nav nav a.active {
-  color: var(--text);
-  font-weight: 600;
-  border-bottom: 2px solid var(--accent);
+header.app-nav nav a {
+  color: var(--text-secondary);
+  font-size: 14px;
+  padding: 4px 0;
+  border-bottom: 2px solid transparent;
 }
+header.app-nav nav a:hover { color: var(--text-primary); text-decoration: none; }
+header.app-nav nav a.active { color: var(--text-primary); font-weight: 600; border-bottom-color: var(--series-mexico); }
 
 header.app-nav .spacer { flex: 1; }
 
 header.app-nav .fx-banner {
   font-size: 12.5px;
-  color: var(--text-dim);
-  background: var(--bg-panel-2);
-  padding: 4px 10px;
+  color: var(--text-secondary);
+  background: var(--surface-2);
+  padding: 5px 12px;
   border-radius: 999px;
   border: 1px solid var(--border);
-}
-
-main {
-  padding: 24px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-h1 { font-size: 22px; margin: 0 0 4px; }
-h2 { font-size: 17px; margin: 28px 0 10px; }
-p.subtitle { color: var(--text-dim); margin: 0 0 20px; }
-
-.panel {
-  background: var(--bg-panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px;
-  margin-bottom: 16px;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13.5px;
-}
-
-th, td {
-  text-align: left;
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
 
+/* ---------- Layout ---------- */
+main {
+  padding: 28px 24px 60px;
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+h1 { font-size: 24px; margin: 0 0 5px; letter-spacing: -0.015em; }
+h2 { font-size: 16px; margin: 30px 0 12px; color: var(--text-primary); font-weight: 650; }
+p.subtitle { color: var(--text-secondary); margin: 0 0 22px; max-width: 760px; }
+
+.panel {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 18px;
+}
+
+/* ---------- Tablas ---------- */
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+
+th, td {
+  text-align: left;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--gridline);
+  white-space: nowrap;
+}
+td { font-variant-numeric: tabular-nums; }
+
 th {
-  color: var(--text-dim);
+  color: var(--text-muted);
   font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
   position: sticky;
   top: 0;
-  background: var(--bg-panel);
+  background: var(--surface-1);
 }
+
+tbody tr:nth-child(even) { background: var(--surface-2); }
+tbody tr:hover { background: color-mix(in srgb, var(--series-mexico) 8%, transparent); }
+
+td.demand-cell-overloaded {
+  background: color-mix(in srgb, var(--status-critical) 22%, transparent);
+  color: var(--status-critical);
+  font-weight: 700;
+}
+
+.status-good-text { color: var(--status-good-text); font-weight: 600; }
+.status-critical-text { color: var(--status-critical); font-weight: 600; }
+.status-warning-text { color: color-mix(in srgb, var(--status-warning) 65%, var(--text-primary)); font-weight: 600; }
+
+tr.row-recommended { background: color-mix(in srgb, var(--status-good) 10%, transparent); }
+tr.row-recommended:nth-child(even) { background: color-mix(in srgb, var(--status-good) 14%, transparent); }
+
+.badge-good {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--status-good) 20%, transparent);
+  color: var(--status-good-text);
+  vertical-align: middle;
+}
+
+.wrap-cell { white-space: normal; max-width: 320px; }
 
 .table-scroll {
   overflow-x: auto;
@@ -124,71 +201,158 @@ th {
   border-radius: var(--radius);
 }
 
-.country-block {
-  margin-bottom: 18px;
-}
+/* ---------- Agrupacion por pais (categorico, slots 1 y 2) ---------- */
+.country-block { margin-bottom: 20px; }
 
 .country-block .country-label {
-  display: inline-block;
-  font-weight: 700;
-  padding: 2px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 650;
+  padding: 3px 12px 3px 8px;
   border-radius: 999px;
   font-size: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 9px;
+}
+.country-block .country-label::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: currentColor;
 }
 
-.country-block.mexico .country-label { background: color-mix(in srgb, var(--mexico) 22%, transparent); color: var(--mexico); }
-.country-block.colombia .country-label { background: color-mix(in srgb, var(--colombia) 22%, transparent); color: var(--colombia); }
+.country-block.mexico .country-label { background: color-mix(in srgb, var(--series-mexico) 16%, transparent); color: var(--series-mexico); }
+.country-block.colombia .country-label { background: color-mix(in srgb, var(--series-colombia) 16%, transparent); color: var(--series-colombia); }
 
-.warning-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+/* ---------- Avisos / hallazgos ---------- */
+.warning-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
 
 .warning-item {
-  border-left: 3px solid var(--warn);
-  background: var(--bg-panel-2);
-  padding: 8px 12px;
-  border-radius: 0 8px 8px 0;
+  border-left: 3px solid var(--status-warning);
+  background: var(--surface-2);
+  padding: 10px 14px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   font-size: 13.5px;
+  line-height: 1.55;
 }
-.warning-item.alto { border-left-color: var(--danger); }
-.warning-item.info { border-left-color: var(--accent); }
+.warning-item.alto { border-left-color: var(--status-critical); }
+.warning-item.info { border-left-color: var(--series-mexico); }
+.warning-item.good { border-left-color: var(--status-good); }
 
 .warning-item .code {
-  font-family: ui-monospace, monospace;
-  color: var(--text-dim);
-  font-size: 11.5px;
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  color: var(--text-muted);
+  font-size: 11px;
+  letter-spacing: 0.02em;
   display: block;
-  margin-bottom: 2px;
+  margin-bottom: 3px;
+  text-transform: uppercase;
 }
 
-.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+/* ---------- Tabs ---------- */
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
 .tabs button {
-  background: var(--bg-panel-2);
+  background: var(--surface-2);
   border: 1px solid var(--border);
-  color: var(--text);
-  padding: 6px 12px;
+  color: var(--text-secondary);
+  padding: 7px 14px;
   border-radius: 999px;
   cursor: pointer;
   font-size: 13px;
+  font-weight: 500;
+  transition: background 0.12s ease, color 0.12s ease;
 }
-.tabs button.active { background: var(--accent); color: white; border-color: var(--accent); }
+.tabs button:hover { color: var(--text-primary); }
+.tabs button.active { background: var(--series-mexico); color: white; border-color: var(--series-mexico); }
 
-.kpi-row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
+/* ---------- Stat tiles (KPI) — ver marks-and-anatomy.md ---------- */
+.kpi-row { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
 .kpi {
-  background: var(--bg-panel);
+  background: var(--surface-1);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 14px 18px;
-  min-width: 140px;
+  padding: 15px 20px;
+  min-width: 150px;
+  flex: 1 1 150px;
 }
-.kpi .label { color: var(--text-dim); font-size: 12px; }
-.kpi .value { font-size: 22px; font-weight: 700; margin-top: 2px; }
+.kpi .label { color: var(--text-secondary); font-size: 12.5px; font-weight: 500; }
+.kpi .value {
+  font-size: 26px;
+  font-weight: 650;
+  margin-top: 4px;
+  letter-spacing: -0.01em;
+  font-variant-numeric: normal; /* proporcional, nunca tabular en un valor grande */
+}
+.kpi .value.status-good { color: var(--status-good-text); }
+.kpi .value.status-critical { color: var(--status-critical); }
+.kpi .value.status-warning { color: color-mix(in srgb, var(--status-warning) 70%, var(--text-primary)); }
+.kpi .sub { color: var(--text-muted); font-size: 11.5px; margin-top: 3px; }
 
+/* ---------- Leyenda (siempre presente cuando hay 2+ series/estados) ---------- */
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 2px 0 14px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+.chart-legend .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.chart-legend .swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.chart-legend .swatch.milestone { border-radius: 2px; transform: rotate(45deg); }
+/* El swatch es HTML (usa background), la barra real es SVG (usa fill) -
+   mismas clases de color, dos propiedades distintas, para que la leyenda
+   nunca se desincronice del grafico real. */
+.swatch.mexico { background: var(--series-mexico); }
+.swatch.colombia { background: var(--series-colombia); }
+.swatch.status-good { background: var(--status-good); }
+.swatch.status-warning { background: var(--status-warning); }
+.swatch.status-critical { background: var(--status-critical); }
+.swatch.sin-datos { background: var(--text-muted); opacity: 0.45; }
+
+/* ---------- Gantt (SVG) ---------- */
+.gantt-scroll { overflow-x: auto; overflow-y: hidden; border-radius: var(--radius-sm); }
+.gantt-svg { display: block; }
+.gantt-gridline { stroke: var(--gridline); stroke-width: 1; }
+.gantt-gridline.month { stroke: var(--baseline); }
+.gantt-weeklabel { font-size: 10px; fill: var(--text-muted); font-variant-numeric: tabular-nums; }
+.gantt-rowlabel { font-size: 12px; fill: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.gantt-rowlabel.emphasis { fill: var(--text-primary); font-weight: 600; }
+
+.gantt-bar { fill: var(--series-mexico); }
+.gantt-bar.mexico { fill: var(--series-mexico); }
+.gantt-bar.colombia { fill: var(--series-colombia); }
+.gantt-bar.status-good { fill: var(--status-good); }
+.gantt-bar.status-warning { fill: var(--status-warning); }
+.gantt-bar.status-critical { fill: var(--status-critical); }
+.gantt-bar.sin-datos { fill: var(--text-muted); opacity: 0.45; }
+.gantt-milestone { stroke: var(--surface-1); stroke-width: 2; }
+
+/* ---------- Banner de error ---------- */
 .error-banner {
-  background: color-mix(in srgb, var(--danger) 18%, transparent);
-  border: 1px solid var(--danger);
-  color: var(--danger);
-  padding: 12px 16px;
+  background: color-mix(in srgb, var(--status-critical) 12%, var(--surface-1));
+  border: 1px solid var(--status-critical);
+  color: var(--status-critical);
+  padding: 13px 16px;
   border-radius: var(--radius);
-  margin-bottom: 16px;
+  margin-bottom: 18px;
   white-space: pre-wrap;
+  font-size: 13.5px;
+}
+
+/* ---------- Utilidades ---------- */
+.hero-figure {
+  font-size: 42px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.text-muted { color: var(--text-muted); }
+.text-secondary { color: var(--text-secondary); }
+
+@media (max-width: 640px) {
+  main { padding: 20px 14px 48px; }
+  header.app-nav { padding: 10px 14px; gap: 12px; }
+  .kpi { min-width: 130px; }
 }

@@ -1,5 +1,5 @@
 import { renderNav } from '../ui/nav.js';
-import { renderGanttSVG } from '../ui/gantt.js';
+import { renderGanttSVG, renderGanttLegend } from '../ui/gantt.js';
 import { groupByCountry } from '../ui/country-groups.js';
 import { loadWorkbook } from '../data/xlsx-loader.js';
 import { buildDomainModel } from '../data/schema.js';
@@ -15,24 +15,31 @@ function countryLabel(country) {
   return country === 'Mexico' ? 'México' : country;
 }
 
+// Nota de diseno: el color de cada barra codifica ESTADO (ruta critica /
+// casi critica / sin datos), no pais - el pais ya lo dice la seccion en la
+// que vive cada Gantt. Mezclar categoria y estado en el mismo canal de
+// color es justo el anti-patron que la guia de datavis pide evitar.
 function ganttForCountry(model, timelines, country, criticalPath) {
   const sitesInCountry = model.sites.filter((s) => s.country === country).map((s) => s.brewery);
   const rows = timelines
     .filter((t) => sitesInCountry.includes(t.site.brewery))
     .sort((a, b) => a.site.brewery.localeCompare(b.site.brewery))
     .map((t) => {
+      const isCritical = criticalPath.critical.includes(t.site.brewery);
+      const isNearCritical = criticalPath.nearCritical.includes(t.site.brewery);
       let colorClass = '';
-      if (criticalPath.critical.includes(t.site.brewery)) colorClass = 'critical';
-      else if (criticalPath.nearCritical.includes(t.site.brewery)) colorClass = 'near-critical';
+      if (isCritical) colorClass = 'status-critical';
+      else if (isNearCritical) colorClass = 'status-warning';
       if (!t.hasResourceData) colorClass = 'sin-datos';
       return {
         label: `${t.site.brewery} (clúster ${t.cluster})`,
+        emphasis: isCritical,
         segments: [
           {
             startWeek: t.startWeek,
             endWeek: t.finishWeek,
             colorClass,
-            tooltip: `${t.site.brewery}: S${t.startWeek}–S${t.finishWeek}${criticalPath.critical.includes(t.site.brewery) ? ' (ruta crítica)' : ''}`,
+            tooltip: `${t.site.brewery}: S${t.startWeek}–S${t.finishWeek}${isCritical ? ' (ruta crítica)' : ''}`,
           },
         ],
       };
@@ -45,11 +52,11 @@ function renderKpis({ criticalPath, structural, cross, overflowSites, horizonWee
   const dentroDeHorizonte = criticalPath.programFinishWeek <= horizonWeeks;
   return `
     <div class="kpi-row">
-      <div class="kpi"><div class="label">Duración total</div><div class="value">${criticalPath.programFinishWeek} sem (${meses} meses)</div></div>
-      <div class="kpi"><div class="label">¿≤ 8 meses?</div><div class="value" style="color:${dentroDeHorizonte ? 'var(--ok)' : 'var(--danger)'}">${dentroDeHorizonte ? 'Sí' : 'No'}</div></div>
+      <div class="kpi"><div class="label">Duración total</div><div class="value">${criticalPath.programFinishWeek} sem<span class="sub"> (${meses} meses)</span></div></div>
+      <div class="kpi"><div class="label">¿Cabe en 8 meses?</div><div class="value ${dentroDeHorizonte ? 'status-good' : 'status-critical'}">${dentroDeHorizonte ? 'Sí' : 'No'}</div></div>
       <div class="kpi"><div class="label">Sitios en ruta crítica</div><div class="value">${criticalPath.critical.length}</div></div>
-      <div class="kpi"><div class="label">Choques por traslape</div><div class="value" style="color:${cross.length ? 'var(--danger)' : 'var(--ok)'}">${cross.length}</div></div>
-      <div class="kpi"><div class="label">Choques estructurales</div><div class="value" style="color:${structural.length ? 'var(--warn)' : 'var(--ok)'}">${structural.length}</div></div>
+      <div class="kpi"><div class="label">Choques por traslape</div><div class="value ${cross.length ? 'status-critical' : 'status-good'}">${cross.length}</div></div>
+      <div class="kpi"><div class="label">Choques estructurales</div><div class="value ${structural.length ? 'status-warning' : 'status-good'}">${structural.length}</div></div>
       <div class="kpi"><div class="label">Sitios en overflow</div><div class="value">${overflowSites.length}</div></div>
     </div>
   `;
@@ -66,8 +73,8 @@ function renderStructuralWarning(structural) {
   }
   const items = [...byRole.values()].map((r) => `<li>${r.role}: faltante en ${r.weeks} semana(s), déficit máximo de ${r.maxOverage.toFixed(2)} persona(s)</li>`).join('');
   return `
-    <div class="warning-item alto" style="margin-bottom:16px;">
-      <span class="code">CHOQUES ESTRUCTURALES — no se resuelven moviendo el calendario</span>
+    <div class="warning-item alto" style="margin-bottom:10px;">
+      <span class="code">Choques estructurales — no se resuelven moviendo el calendario</span>
       Estos roles no alcanzan ni para UN sitio a la vez con el headcount de este escenario — mover fechas no ayuda,
       hace falta más gente en ese rol:
       <ul>${items}</ul>
@@ -77,12 +84,12 @@ function renderStructuralWarning(structural) {
 
 function renderCrossWarning(cross) {
   if (cross.length === 0) {
-    return `<div class="warning-item" style="border-left-color:var(--ok);">Sin choques por traslape entre sitios en este calendario propuesto.</div>`;
+    return `<div class="warning-item good">Sin choques por traslape entre sitios en este calendario propuesto.</div>`;
   }
   const top = cross.slice(0, 8).map((c) => `<li>${c.role}, semana ${c.week}: demanda ${c.demand.toFixed(2)} vs oferta ${c.supply} (sitios: ${[...new Set(c.contributors.map((x) => x.site))].join(', ')})</li>`).join('');
   return `
     <div class="warning-item alto">
-      <span class="code">CHOQUES POR TRASLAPE — sí se resuelven ajustando el calendario</span>
+      <span class="code">Choques por traslape — sí se resuelven ajustando el calendario</span>
       ${cross.length} choque(s) donde 2+ sitios compiten por el mismo rol la misma semana:
       <ul>${top}</ul>
       ${cross.length > 8 ? `<p>… y ${cross.length - 8} más.</p>` : ''}
@@ -114,7 +121,12 @@ async function main() {
         return `
           <div class="country-block ${country === 'Mexico' ? 'mexico' : 'colombia'}">
             <span class="country-label">${countryLabel(country)}</span>
-            ${renderGanttSVG({ rows, totalWeeks: Math.max(criticalPath.programFinishWeek, 1), title: `Gantt ${country}` })}
+            ${renderGanttSVG({
+              rows,
+              totalWeeks: Math.max(criticalPath.programFinishWeek, 1),
+              title: `Gantt ${country}`,
+              weeksPerMonth: CONFIG.WEEKS_PER_MONTH,
+            })}
           </div>
         `;
       })
@@ -125,7 +137,7 @@ async function main() {
       <p class="subtitle">
         Escenario: <strong>Actual</strong> (headcount de hoy) · Madurez por defecto: A en todos los clústeres ·
         Heurística automática de calendario (ajuste manual disponible en la pestaña Recursos).
-        ${overflowSites.length ? `<br/><span style="color:var(--warn)">Sitios que no cupieron sin choque dentro del horizonte: ${overflowSites.join(', ')}.</span>` : ''}
+        ${overflowSites.length ? `<br/><span class="text-secondary">Sitios que no cupieron sin choque dentro del horizonte: ${overflowSites.join(', ')}.</span>` : ''}
       </p>
       <h2>Choques de recursos</h2>
       <div class="panel">
@@ -133,7 +145,14 @@ async function main() {
         ${renderCrossWarning(cross)}
       </div>
       <h2>Gantt del programa</h2>
-      <div class="panel">${ganttSections}</div>
+      <div class="panel">
+        ${renderGanttLegend([
+          { label: 'Ruta crítica (define la fecha de fin)', colorClass: 'status-critical' },
+          { label: 'Casi crítico (≤2 semanas de holgura)', colorClass: 'status-warning' },
+          { label: 'Sin datos de recursos', colorClass: 'sin-datos' },
+        ])}
+        ${ganttSections}
+      </div>
     `;
 
     window.__wmsModel = model;

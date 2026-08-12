@@ -58,10 +58,10 @@ function renderResultSummary(result) {
   return `
     <div class="kpi-row">
       <div class="kpi"><div class="label">Duración</div><div class="value">${result.criticalPath.programFinishWeek} sem</div></div>
-      <div class="kpi"><div class="label">≤8 meses</div><div class="value" style="color:${result.withinHorizon ? 'var(--ok)' : 'var(--danger)'}">${result.withinHorizon ? 'Sí' : 'No'}</div></div>
-      <div class="kpi"><div class="label">Choques estructurales</div><div class="value" style="color:${result.structural.length ? 'var(--warn)' : 'var(--ok)'}">${result.structural.length}</div></div>
-      <div class="kpi"><div class="label">Choques por traslape</div><div class="value" style="color:${result.cross.length ? 'var(--danger)' : 'var(--ok)'}">${result.cross.length}</div></div>
-      <div class="kpi"><div class="label">Costo total</div><div class="value">${fmtMoney(result.cost.totalCostMXN)} MXN</div></div>
+      <div class="kpi"><div class="label">Cabe en 8 meses</div><div class="value ${result.withinHorizon ? 'status-good' : 'status-critical'}">${result.withinHorizon ? 'Sí' : 'No'}</div></div>
+      <div class="kpi"><div class="label">Choques estructurales</div><div class="value ${result.structural.length ? 'status-warning' : 'status-good'}">${result.structural.length}</div></div>
+      <div class="kpi"><div class="label">Choques por traslape</div><div class="value ${result.cross.length ? 'status-critical' : 'status-good'}">${result.cross.length}</div></div>
+      <div class="kpi"><div class="label">Costo total</div><div class="value">${fmtMoney(result.cost.totalCostMXN)}<span class="sub"> MXN</span></div></div>
     </div>
   `;
 }
@@ -74,7 +74,7 @@ function renderDemandTable(model, result) {
     .map((r) => {
       const cells = r.weeks
         .slice(0, maxWeeks)
-        .map((w) => `<td style="${w.overloaded ? 'background:color-mix(in srgb, var(--danger) 35%, transparent); color:var(--danger); font-weight:700;' : ''}">${w.demand ? w.demand.toFixed(1) : ''}</td>`)
+        .map((w) => `<td class="${w.overloaded ? 'demand-cell-overloaded' : ''}">${w.demand ? w.demand.toFixed(1) : ''}</td>`)
         .join('');
       return `<tr><td>${r.role}</td>${cells}</tr>`;
     })
@@ -82,7 +82,14 @@ function renderDemandTable(model, result) {
   const truncatedNote = result.criticalPath.programFinishWeek > maxWeeks
     ? `<p class="subtitle">Mostrando las primeras ${maxWeeks} semanas de ${result.criticalPath.programFinishWeek} (la tabla completa es muy ancha para mostrar de golpe).</p>`
     : '';
-  return `<div class="table-scroll">${truncatedNote}<table><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;
+  return `
+    ${renderLegendInline()}
+    <div class="table-scroll">${truncatedNote}<table><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>
+  `;
+}
+
+function renderLegendInline() {
+  return `<div class="chart-legend"><span class="legend-item"><span class="swatch status-critical"></span>Semana con choque (demanda &gt; oferta)</span></div>`;
 }
 
 function attachHandlers() {
@@ -136,7 +143,7 @@ function render() {
     <h2>Headcount por rol</h2>
     <div class="panel">${renderFteTable(model, currentScenario, overrides)}</div>
 
-    <h2>Demanda semanal vs. oferta (celdas rojas = choque)</h2>
+    <h2>Demanda semanal vs. oferta</h2>
     <div class="panel">${renderDemandTable(model, result)}</div>
   `;
 

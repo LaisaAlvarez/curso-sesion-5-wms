@@ -14,19 +14,25 @@ function fmtMoney(v) {
 }
 
 function renderComparisonTable(evaluations) {
+  const winningCost = Math.min(
+    ...evaluations.filter((e) => e.result.feasible && e.result.withinHorizon).map((e) => e.result.cost.totalCostMXN),
+    Infinity
+  );
+
   const rows = evaluations
     .map(({ scenario, result }) => {
-      const feasibleLabel = result.feasible ? 'Sí' : `No (${result.structural.length} choque(s) estructurales)`;
+      const isWinner = result.feasible && result.withinHorizon && result.cost.totalCostMXN === winningCost;
+      const feasibleLabel = result.feasible ? 'Sí' : `No (${result.structural.length})`;
       const withinLabel = result.withinHorizon ? 'Sí' : 'No';
       return `
-        <tr>
-          <td><strong>${scenario.name}</strong><br/><span class="subtitle" style="font-size:11.5px;">${scenario.description}</span></td>
-          <td>${result.criticalPath.programFinishWeek} sem<br/>(${result.cost.programDurationMonths.toFixed(1)} meses)</td>
-          <td style="color:${result.withinHorizon ? 'var(--ok)' : 'var(--danger)'}">${withinLabel}</td>
-          <td style="color:${result.feasible ? 'var(--ok)' : 'var(--danger)'}">${feasibleLabel}</td>
-          <td>${result.cross.length}</td>
-          <td>${fmtMoney(result.cost.totalCostMXN)} MXN</td>
-          <td>${fmtMoney(result.cost.totalCostMXN / CONFIG.FX_RATE_MXN_PER_USD)} USD</td>
+        <tr class="${isWinner ? 'row-recommended' : ''}">
+          <td class="wrap-cell"><strong>${scenario.name}</strong>${isWinner ? ' <span class="badge-good">recomendado</span>' : ''}<br/><span class="text-secondary" style="font-size:11.5px;">${scenario.description}</span></td>
+          <td>${result.criticalPath.programFinishWeek} sem<br/><span class="text-muted">(${result.cost.programDurationMonths.toFixed(1)} meses)</span></td>
+          <td class="${result.withinHorizon ? 'status-good-text' : 'status-critical-text'}">${withinLabel}</td>
+          <td class="${result.feasible ? 'status-good-text' : 'status-warning-text'}">${feasibleLabel}</td>
+          <td class="${result.cross.length ? 'status-critical-text' : 'status-good-text'}">${result.cross.length}</td>
+          <td>${fmtMoney(result.cost.totalCostMXN)}</td>
+          <td>${fmtMoney(result.cost.totalCostMXN / CONFIG.FX_RATE_MXN_PER_USD)}</td>
         </tr>`;
     })
     .join('');
@@ -35,8 +41,8 @@ function renderComparisonTable(evaluations) {
     <div class="table-scroll">
       <table>
         <thead><tr>
-          <th>Escenario</th><th>Duración</th><th>≤8 meses</th><th>Sin choques estructurales</th>
-          <th>Choques por traslape</th><th>Costo total (MXN)</th><th>Costo total (USD)</th>
+          <th>Escenario</th><th>Duración</th><th>≤8 meses</th><th>Sin choques estruct.</th>
+          <th>Choques traslape</th><th>Costo (MXN)</th><th>Costo (USD)</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>

@@ -74,14 +74,17 @@ function render(model, scenarios) {
   const result = evaluateScenario(model, scenario);
 
   content.innerHTML = `
-    <div class="panel">
-      <label><strong>Escenario:</strong></label>
-      <select id="scenario-select" style="margin-left:8px; padding:4px 8px;">
-        ${scenarios.map((s) => `<option value="${s.id}" ${s.id === scenario.id ? 'selected' : ''}>${s.name}</option>`).join('')}
-      </select>
-      <span style="margin-left:20px;"><strong>Moneda:</strong></span>
-      <button id="mxn-btn" class="${state.currency === 'MXN' ? 'active' : ''}" style="margin-left:6px; padding:4px 10px; border-radius:6px; border:1px solid var(--border); background:${state.currency === 'MXN' ? 'var(--accent)' : 'var(--bg-panel-2)'}; color:${state.currency === 'MXN' ? 'white' : 'var(--text)'}; cursor:pointer;">MXN</button>
-      <button id="usd-btn" style="margin-left:4px; padding:4px 10px; border-radius:6px; border:1px solid var(--border); background:${state.currency === 'USD' ? 'var(--accent)' : 'var(--bg-panel-2)'}; color:${state.currency === 'USD' ? 'white' : 'var(--text)'}; cursor:pointer;">USD</button>
+    <div class="panel" style="display:flex; align-items:center; gap:24px; flex-wrap:wrap;">
+      <div>
+        <label for="scenario-select"><strong>Escenario:</strong></label>
+        <select id="scenario-select" style="margin-left:8px; padding:5px 10px;">
+          ${scenarios.map((s) => `<option value="${s.id}" ${s.id === scenario.id ? 'selected' : ''}>${s.name}</option>`).join('')}
+        </select>
+      </div>
+      <div class="tabs" style="margin:0;">
+        <button id="mxn-btn" class="${state.currency === 'MXN' ? 'active' : ''}">MXN</button>
+        <button id="usd-btn" class="${state.currency === 'USD' ? 'active' : ''}">USD</button>
+      </div>
     </div>
 
     <h2>Resumen — ${scenario.name}</h2>
