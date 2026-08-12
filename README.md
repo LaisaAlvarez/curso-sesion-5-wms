@@ -31,8 +31,23 @@ Y abrir `http://localhost:8080/` en el navegador.
 - `scenarios/` — los escenarios nombrados del ejercicio, versionados en git.
 - `CLAUDE.md` / `CLAUDE.local.md` — el brief del curso y notas de contexto.
 
+## Páginas
+
+- `index.html` — dashboard del programa: Gantt de los 15 sitios agrupados por país, ruta crítica.
+- `sitio.html` — línea de tiempo y roles de un sitio individual.
+- `recursos.html` — tabla editable de headcount por rol, con demanda semanal en vivo.
+- `escenarios.html` — comparativo de los 8 escenarios pedidos, export/import de escenarios propios.
+- `costos.html` — costo por sitio (agrupado por país) y por rol, en MXN o USD.
+- `informe.html` — resumen ejecutivo en lenguaje llano, con hallazgos y recomendación.
+- `datos.html` — explorador de las 6 pestañas del Excel fuente, con advertencias de calidad de datos.
+
+## Hallazgo principal
+
+Con el headcount "Actual" (casi 1 persona por rol), el programa no cabe en 8 meses — se estira a
+~121 semanas, y ni siquiera "Escenario 1" (5 personas por rol) logra caber en 8 meses. El detalle y
+la recomendación completa están en `informe.html`.
+
 ## Estado
 
-Proyecto en construcción por hitos incrementales (ver historial de commits). Hito actual:
-carga de datos + explorador de las 6 pestañas (`datos.html`) con detección de advertencias de
-calidad de datos.
+Los 8 hitos de construcción están completos (ver historial de commits). Pendiente: publicar en
+GitHub Pages.
