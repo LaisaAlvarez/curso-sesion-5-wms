@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Informe Ejecutivo — Simulador WMS</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <style>
+    .informe p { max-width: 760px; line-height: 1.65; }
+    .informe .destacado { font-size: 18px; font-weight: 600; margin: 4px 0 18px; }
+  </style>
+</head>
+<body>
+  <div id="app-nav"></div>
+  <main>
+    <h1>Informe ejecutivo</h1>
+    <p class="subtitle">Explicación en lenguaje llano de qué se construyó, qué se encontró, y qué se recomienda.</p>
+    <div id="content" class="informe">Cargando datos…</div>
+  </main>
+
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script type="module" src="js/pages/page-informe.js"></script>
+</body>
+</html>
