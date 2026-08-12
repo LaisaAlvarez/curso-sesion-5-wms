@@ -1,11 +1,21 @@
 // Constantes visibles del ejercicio. Todo lo que sea un supuesto vive aqui,
 // nunca escondido dentro de una formula.
 
+// 52/12 exacto. Antes este archivo tenia 4.345 (no coincidia con el
+// comentario "52/12") Y ademas el horizonte estaba redondeado hacia
+// ARRIBA a 35 semanas ("~8 meses"), lo que produce resultados que dicen
+// "si cumple <=8 meses" mostrando "8.1 meses" al mismo tiempo - una
+// inconsistencia real que un escenario "Optimo" de 35 semanas exponia.
+// Ahora el horizonte se calcula EXACTO a partir de esta constante, nunca
+// se redondea hacia arriba (solo hacia abajo, para no reportar como
+// exitoso algo que en realidad se pasa de 8 meses).
+const WEEKS_PER_MONTH_EXACT = 52 / 12;
+
 export const CONFIG = {
   FX_RATE_MXN_PER_USD: 18.0, // fijo, definido por el brief del curso
   PROGRAM_START_DATE: '2026-08-12', // fecha de arranque asumida del programa completo
-  PROGRAM_HORIZON_WEEKS: 35, // ~8 meses
-  WEEKS_PER_MONTH: 4.345, // 52/12, para convertir semanas <-> meses de nomina
+  PROGRAM_HORIZON_WEEKS: Math.floor(8 * WEEKS_PER_MONTH_EXACT), // 8 meses exactos, redondeado hacia abajo
+  WEEKS_PER_MONTH: WEEKS_PER_MONTH_EXACT,
   DATA_FILE_PATH: 'docs/wms-scenarios-s5 (traducido).xlsx',
 
   // Politica de datos confirmada con la usuaria: si un cluster no tiene NINGUNA

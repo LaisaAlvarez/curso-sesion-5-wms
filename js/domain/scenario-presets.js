@@ -142,14 +142,49 @@ export function computeOptimo(model) {
   }
 
   const converged = result.feasible && result.withinHorizon;
+  const headcountAfterConstruccion = Object.values(headcount).reduce((a, b) => a + b, 0);
+
+  // Fase 2 (poda): la fase 1 sube de a pasos proporcionales, que casi
+  // siempre se pasan de lo estrictamente necesario. Aqui se intenta quitar
+  // gente de a 1, rol por rol (del mas caro al mas barato, para maximizar
+  // el ahorro por cada recorte), sin bajar nunca del piso de FTE minimo
+  // viable (eso sigue siendo obligatorio) y sin dejar de caber en 8 meses.
+  // Se repite en barridos completos hasta que un barrido entero no logre
+  // quitar a nadie mas - eso es el punto de equilibrio de esta heuristica.
+  let trimIterations = 0;
+  if (converged) {
+    const floor = { ...headcountByRoleFromScenario(model, { fteBase: 'Actual', fteOverrides: fteMinimo.fteOverrides }) };
+    const rolesByCostDesc = [...model.resourcePools].sort((a, b) => b.blendedMonthlyCostMXN - a.blendedMonthlyCostMXN).map((p) => p.role);
+
+    let improvedInSweep = true;
+    while (improvedInSweep) {
+      improvedInSweep = false;
+      for (const role of rolesByCostDesc) {
+        while (headcount[role] > floor[role]) {
+          trimIterations++;
+          const candidate = { ...headcount, [role]: headcount[role] - 1 };
+          const candidateResult = evaluateScenario(model, { fteBase: 'Actual', fteOverrides: candidate, delayPct: 0, maturityByCluster: CONFIG.DEFAULT_MATURITY_BY_CLUSTER });
+          if (candidateResult.feasible && candidateResult.withinHorizon) {
+            headcount[role] -= 1;
+            result = candidateResult;
+            improvedInSweep = true;
+          } else {
+            break;
+          }
+        }
+      }
+    }
+  }
+
   const totalHeadcount = Object.values(headcount).reduce((a, b) => a + b, 0);
+  const trimmed = headcountAfterConstruccion - totalHeadcount;
 
   return {
     schemaVersion: 1,
     id: 'optimo',
     name: 'Óptimo',
     description: converged
-      ? `Búsqueda greedy (${iterations} iteraciones): en cada paso se le agregó gente SOLO al rol que más choques por traslape causaba, hasta que cupo en 8 meses sin choques. Headcount total: ${totalHeadcount} personas.`
+      ? `Búsqueda greedy en 2 fases: (1) ${iterations} iteración(es) agregando gente SOLO al rol más problemático hasta caber en 8 meses, (2) poda de ${trimIterations} intento(s) que quitó ${trimmed} persona(s) de más (empezando por los roles más caros) sin dejar de cumplir la meta. Headcount final: ${totalHeadcount} personas. No es un óptimo matemático garantizado, es un mínimo local de esta heurística.`
       : `Búsqueda greedy no convergió en ${MAX_ITERATIONS} iteraciones (quedó en ${result.criticalPath.programFinishWeek} semanas, headcount total ${totalHeadcount}) - se muestra el mejor resultado alcanzado, no una certeza de que 8 meses sea imposible.`,
     fteBase: 'Actual',
     fteOverrides: { ...headcount },
