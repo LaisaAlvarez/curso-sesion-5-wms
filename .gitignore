@@ -1,0 +1,7 @@
+# Excel: archivos de bloqueo temporales y copias de trabajo personales
+~$*.xlsx
+docs/copia LAISA.xlsx
+
+# Sistema
+.DS_Store
+Thumbs.db
