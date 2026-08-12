@@ -5,7 +5,7 @@ agrupados en 4 clústeres. El reto: cada fase de cada sitio consume capacidad de
 si dos sitios avanzan la misma fase al mismo tiempo, compiten por la misma gente. El objetivo es
 completar el programa completo en ≤8 meses con el menor costo posible.
 
-Sitio en vivo: _(pendiente de publicar en GitHub Pages)_
+Sitio en vivo: https://laisaalvarez.github.io/curso-sesion-5-wms/
 
 ## Cómo correrlo localmente
 
@@ -49,5 +49,4 @@ la recomendación completa están en `informe.html`.
 
 ## Estado
 
-Los 8 hitos de construcción están completos (ver historial de commits). Pendiente: publicar en
-GitHub Pages.
+Los 8 hitos de construcción están completos (ver historial de commits) y publicados en GitHub Pages.
