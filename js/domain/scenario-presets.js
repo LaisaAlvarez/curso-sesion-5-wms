@@ -101,50 +101,62 @@ export function computeMayorAhorroMayorTiempo(model) {
   };
 }
 
-// Busqueda simple (no es un optimizador matematico): prueba multiplicadores
-// de headcount entre Actual y Escenario 1, se queda con el MENOR que logre
-// caber en el horizonte de 8 meses sin choques estructurales ni cruzados.
+function tallyOverageByRole(conflicts) {
+  const tally = {};
+  for (const c of conflicts) {
+    tally[c.role] = (tally[c.role] ?? 0) + c.overage;
+  }
+  return tally;
+}
+
+// Busqueda greedy (no es un optimizador matematico exacto, pero SIN techo
+// artificial): arranca de FTE minimo viable (resuelve los choques
+// estructurales) y despues, mientras no quepa en 8 meses sin choques,
+// identifica el ROL que mas esta causando choques POR TRASLAPE (mas
+// excedente acumulado) y le agrega headcount a ese rol especificamente -
+// nunca a todos por igual - hasta que el calendario quepa. Se detiene si
+// llega a MAX_ITERATIONS sin converger (para no colgar el navegador) y lo
+// declara honestamente en la descripcion.
 export function computeOptimo(model) {
-  const actual = headcountByRoleFromScenario(model, { fteBase: 'Actual' });
-  const esc1 = headcountByRoleFromScenario(model, { fteBase: 'Escenario 1' });
+  const fteMinimo = computeFteMinimoViable(model);
+  const headcount = headcountByRoleFromScenario(model, { fteBase: 'Actual', fteOverrides: fteMinimo.fteOverrides });
 
-  const candidates = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5];
-  let winner = null;
+  const MAX_ITERATIONS = 400;
+  let iterations = 0;
+  let result = evaluateScenario(model, { fteBase: 'Actual', fteOverrides: headcount, delayPct: 0, maturityByCluster: CONFIG.DEFAULT_MATURITY_BY_CLUSTER });
 
-  for (const mult of candidates) {
-    const overrides = {};
-    for (const role of Object.keys(actual)) {
-      const scaled = Math.min(esc1[role], Math.ceil(actual[role] * mult));
-      overrides[role] = scaled;
+  while (!(result.feasible && result.withinHorizon) && iterations < MAX_ITERATIONS) {
+    iterations++;
+    const overageByRole = tallyOverageByRole(result.cross.length ? result.cross : result.structural);
+    const roles = Object.keys(overageByRole);
+    if (roles.length === 0) {
+      // No hay a quien culpar (raro: no cabe en horizonte pero sin choques
+      // reportados) - sube todos los roles 1 como ultimo recurso.
+      for (const role of Object.keys(headcount)) headcount[role] += 1;
+    } else {
+      const worstRole = roles.reduce((a, b) => (overageByRole[a] >= overageByRole[b] ? a : b));
+      const step = Math.max(1, Math.ceil(overageByRole[worstRole] / 4)); // paso mas grande si el excedente es grande
+      headcount[worstRole] += step;
     }
-    const candidateScenario = {
-      id: 'optimo-candidato',
-      fteBase: 'Actual',
-      fteOverrides: overrides,
-      delayPct: 0,
-      maturityByCluster: CONFIG.DEFAULT_MATURITY_BY_CLUSTER,
-    };
-    const result = evaluateScenario(model, candidateScenario);
-    if (result.feasible && result.withinHorizon) {
-      winner = { mult, overrides, cost: result.cost.totalCostMXN };
-      break;
-    }
+    result = evaluateScenario(model, { fteBase: 'Actual', fteOverrides: { ...headcount }, delayPct: 0, maturityByCluster: CONFIG.DEFAULT_MATURITY_BY_CLUSTER });
   }
 
-  const fallbackOverrides = winner ? winner.overrides : esc1;
+  const converged = result.feasible && result.withinHorizon;
+  const totalHeadcount = Object.values(headcount).reduce((a, b) => a + b, 0);
 
   return {
     schemaVersion: 1,
     id: 'optimo',
     name: 'Óptimo',
-    description: winner
-      ? `Búsqueda simple (multiplicadores de headcount sobre Actual, tope Escenario 1): el multiplicador ${winner.mult}x fue el menor que cupo en 8 meses sin choques.`
-      : 'Ni siquiera Escenario 1 (5 por rol) cupo en 8 meses sin choques - se usa Escenario 1 como mejor disponible.',
+    description: converged
+      ? `Búsqueda greedy (${iterations} iteraciones): en cada paso se le agregó gente SOLO al rol que más choques por traslape causaba, hasta que cupo en 8 meses sin choques. Headcount total: ${totalHeadcount} personas.`
+      : `Búsqueda greedy no convergió en ${MAX_ITERATIONS} iteraciones (quedó en ${result.criticalPath.programFinishWeek} semanas, headcount total ${totalHeadcount}) - se muestra el mejor resultado alcanzado, no una certeza de que 8 meses sea imposible.`,
     fteBase: 'Actual',
-    fteOverrides: fallbackOverrides,
+    fteOverrides: { ...headcount },
     delayPct: 0,
     maturityByCluster: CONFIG.DEFAULT_MATURITY_BY_CLUSTER,
-    searchFoundFeasible: !!winner,
+    searchFoundFeasible: converged,
+    searchIterations: iterations,
   };
 }
 
