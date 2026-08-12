@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "atraso-40",
+  "name": "+40% de atraso",
+  "description": "Headcount Actual, pero cada fase dura 40% mas de lo planeado - un escenario de estres, no un ajuste fino.",
+  "fteBase": "Actual",
+  "fteOverrides": {},
+  "delayPct": 40,
+  "maturityByCluster": { "1": "A", "2": "A", "3": "A", "4": "A" }
+}

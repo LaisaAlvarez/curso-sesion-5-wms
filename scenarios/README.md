@@ -1,16 +1,17 @@
 # Escenarios
 
-Estos 5 archivos son los escenarios "simples" del ejercicio, versionados aqui para
-poder compararlos con `git diff` entre ellos. La app (`js/domain/scenario-presets.js`)
-trae estos mismos 5 escritos en código (`STATIC_SCENARIOS`) para no depender de un
-`fetch()` extra, más 3 escenarios que SÍ dependen de calcular contra el Excel en vivo
-y por eso no existen como archivo estático:
+Decisión de Laisa (2026-08-12): se recortó de los 8 escenarios originales del brief a
+solo 3, para no saturar la comparación:
 
-- **fte-minimo-viable** — cuánta gente hay que agregar (nunca quitar) para que ningún
-  sitio, corriendo solo, se quede sin gente en su fase más exigente.
-- **mayor-ahorro-mayor-tiempo** — usa el mismo cálculo anterior.
-- **optimo** — búsqueda simple del menor headcount que logra caber en 8 meses sin
-  choques.
+- **actual.json** — headcount de hoy, sin atraso.
+- **atraso-40.json** — headcount de hoy, cada fase dura 40% más.
+- **Óptimo** — no existe como archivo estático porque depende de calcular contra el
+  Excel en vivo (búsqueda greedy del menor headcount que cabe en 8 meses). Se genera
+  en código, en `js/domain/scenario-presets.js`.
+
+Estos dos archivos son de referencia/versionado (`git diff` entre ellos). La app trae
+estos mismos valores escritos en código en `STATIC_SCENARIOS`, para no depender de un
+`fetch()` extra.
 
 Los escenarios que un usuario cree/edite a mano en `recursos.html` viven en
 `localStorage` del navegador, y se pueden exportar a un archivo `.json` con este mismo

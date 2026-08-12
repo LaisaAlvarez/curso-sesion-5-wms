@@ -33,19 +33,22 @@ Y abrir `http://localhost:8080/` en el navegador.
 
 ## Páginas
 
-- `index.html` — dashboard del programa: Gantt de los 15 sitios agrupados por país, ruta crítica.
-- `sitio.html` — línea de tiempo y roles de un sitio individual.
+- `index.html` (portada) — costo total por escenario, desglose de implementación por sitio tal como
+  lo pide el brief (dispositivos, montacargas, señalización, etiquetas, 3 opciones de WiFi), nómina
+  por rol, retorno de inversión.
+- `programa.html` — calendario de los 15 sitios agrupados por país, ruta crítica resaltada. Clic en
+  un sitio despliega sus 8 fases con conectores (estilo Gantt de Microsoft Project).
 - `recursos.html` — tabla editable de headcount por rol, con demanda semanal en vivo.
-- `escenarios.html` — comparativo de los 8 escenarios pedidos, export/import de escenarios propios.
-- `costos.html` — costo por sitio (agrupado por país) y por rol, en MXN o USD.
+- `escenarios.html` — comparativo de Actual, +40% de atraso, y Óptimo; export/import de escenarios propios.
 - `informe.html` — resumen ejecutivo en lenguaje llano, con hallazgos y recomendación.
 - `datos.html` — explorador de las 6 pestañas del Excel fuente, con advertencias de calidad de datos.
 
 ## Hallazgo principal
 
 Con el headcount "Actual" (casi 1 persona por rol), el programa no cabe en 8 meses — se estira a
-~121 semanas, y ni siquiera "Escenario 1" (5 personas por rol) logra caber en 8 meses. El detalle y
-la recomendación completa están en `informe.html`.
+~118 semanas. El escenario "Óptimo" (búsqueda greedy de headcount, sin techo artificial) sí encuentra
+una combinación que cabe en 8 meses sin choques. El detalle y la recomendación completa están en
+`informe.html`.
 
 ## Estado
 

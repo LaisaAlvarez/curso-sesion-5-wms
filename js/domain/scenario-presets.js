@@ -1,11 +1,9 @@
-// Los 8 escenarios pedidos en el brief. Los 5 "simples" son objetos
-// estaticos (tambien viven como JSON en scenarios/ para diff de git). Los 3
-// que requieren calculo contra el modelo (fte minimo viable, mayor ahorro, y
-// optimo) se generan en vivo - nunca se guarda un resultado calculado.
+// Escenarios expuestos (decision de Laisa, 2026-08-12: recortar de los 8
+// originales del brief a estos 3, para no saturar la comparacion):
+// Actual, +40% de atraso, y Optimo.
 
 import { evaluateScenario } from '../state/store.js';
-import { structuralConflicts } from './scheduler.js';
-import { headcountByRoleFromScenario, computeWeeklyDemand, detectConflicts } from './conflicts.js';
+import { headcountByRoleFromScenario } from './conflicts.js';
 import { CONFIG } from '../config.js';
 
 export const STATIC_SCENARIOS = [
@@ -21,42 +19,12 @@ export const STATIC_SCENARIOS = [
   },
   {
     schemaVersion: 1,
-    id: 'escenario-1',
-    name: 'Escenario 1',
-    description: 'El escenario alterno que ya trae el Excel fuente (5 personas por rol).',
-    fteBase: 'Escenario 1',
-    fteOverrides: {},
-    delayPct: 0,
-    maturityByCluster: CONFIG.DEFAULT_MATURITY_BY_CLUSTER,
-  },
-  {
-    schemaVersion: 1,
-    id: 'atraso-5',
-    name: '+5% de atraso',
-    description: 'Headcount Actual, pero cada fase dura 5% mas de lo planeado.',
+    id: 'atraso-40',
+    name: '+40% de atraso',
+    description: 'Headcount Actual, pero cada fase dura 40% mas de lo planeado - un escenario de estres, no un ajuste fino.',
     fteBase: 'Actual',
     fteOverrides: {},
-    delayPct: 5,
-    maturityByCluster: CONFIG.DEFAULT_MATURITY_BY_CLUSTER,
-  },
-  {
-    schemaVersion: 1,
-    id: 'atraso-10',
-    name: '+10% de atraso',
-    description: 'Headcount Actual, pero cada fase dura 10% mas de lo planeado.',
-    fteBase: 'Actual',
-    fteOverrides: {},
-    delayPct: 10,
-    maturityByCluster: CONFIG.DEFAULT_MATURITY_BY_CLUSTER,
-  },
-  {
-    schemaVersion: 1,
-    id: 'menor-ahorro-menor-tiempo',
-    name: 'Menor ahorro, menor tiempo',
-    description: 'Mismo perfil que Escenario 1: mucha gente contratada (gasto alto), programa corto.',
-    fteBase: 'Escenario 1',
-    fteOverrides: {},
-    delayPct: 0,
+    delayPct: 40,
     maturityByCluster: CONFIG.DEFAULT_MATURITY_BY_CLUSTER,
   },
 ];
@@ -88,16 +56,6 @@ export function computeFteMinimoViable(model) {
     fteOverrides: overrides,
     delayPct: 0,
     maturityByCluster: CONFIG.DEFAULT_MATURITY_BY_CLUSTER,
-  };
-}
-
-export function computeMayorAhorroMayorTiempo(model) {
-  const base = computeFteMinimoViable(model);
-  return {
-    ...base,
-    id: 'mayor-ahorro-mayor-tiempo',
-    name: 'Mayor ahorro, mayor tiempo',
-    description: 'El mínimo de gente que hace el programa posible (sin resolver choques por traslape): gasto bajo, programa largo por la serialización forzada.',
   };
 }
 
@@ -196,5 +154,5 @@ export function computeOptimo(model) {
 }
 
 export function getAllScenarios(model) {
-  return [...STATIC_SCENARIOS, computeFteMinimoViable(model), computeMayorAhorroMayorTiempo(model), computeOptimo(model)];
+  return [...STATIC_SCENARIOS, computeOptimo(model)];
 }

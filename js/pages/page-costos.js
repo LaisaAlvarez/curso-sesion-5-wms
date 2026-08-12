@@ -6,7 +6,7 @@ import { evaluateScenario } from '../state/store.js';
 import { getAllScenarios } from '../domain/scenario-presets.js';
 import { CONFIG } from '../config.js';
 
-renderNav('costos.html');
+renderNav('index.html');
 const content = document.getElementById('content');
 
 let state = { currency: 'MXN' };
@@ -17,17 +17,53 @@ function money(valueMXN) {
 }
 
 function renderKpis(result) {
+  const totalFte = Object.values(result.headcountByRole).reduce((a, b) => a + b, 0);
+  const paybackMonths = result.cost.totalMonthlyBenefitMXN > 0 ? result.cost.totalCostMXN / result.cost.totalMonthlyBenefitMXN : null;
   return `
     <div class="kpi-row">
-      <div class="kpi"><div class="label">Costo total del programa</div><div class="value">${money(result.cost.totalCostMXN)}</div></div>
+      <div class="kpi kpi-hero"><div class="label">Costo total del programa</div><div class="value">${money(result.cost.totalCostMXN)}</div></div>
       <div class="kpi"><div class="label">Implementación (única vez)</div><div class="value">${money(result.cost.totalImplementationMXN)}</div></div>
       <div class="kpi"><div class="label">Nómina (${result.cost.programDurationMonths.toFixed(1)} meses)</div><div class="value">${money(result.cost.totalPayrollMXN)}</div></div>
-      <div class="kpi"><div class="label">Beneficio mensual (referencia ROI)</div><div class="value">${money(result.cost.totalMonthlyBenefitMXN)}</div></div>
+      <div class="kpi"><div class="label">Gente total (FTE)</div><div class="value">${totalFte}</div></div>
+      <div class="kpi">
+        <div class="label">Retorno de inversión</div>
+        <div class="value">${paybackMonths ? paybackMonths.toFixed(1) : '—'}<span class="sub"> meses</span></div>
+        <div class="sub">con ${money(result.cost.totalMonthlyBenefitMXN)}/mes de beneficio</div>
+      </div>
     </div>
   `;
 }
 
-function renderPerSiteTable(model, result) {
+// Desglose literal, tal como lo describe el brief (CLAUDE.md): "Por sitio:
+// beneficio mensual... y los costos de implementacion - dispositivos,
+// estructura de montacargas, senializacion, etiquetas e impresoras,
+// etiquetado manual, y tres opciones de WiFi (full, optimizado,
+// priorizado)". Se muestran los componentes crudos, no un numero ya
+// colapsado a "la opcion mas barata" - esa eleccion sigue existiendo (se ve
+// en el KPI de arriba, que sí necesita elegir una para dar un total), pero
+// aqui se ve el detalle completo para que no quede escondido.
+function renderLiteralBreakdown(model) {
+  return renderCountryGroupedTable(
+    model.financials,
+    [
+      { key: 'brewery', label: 'Sitio' },
+      { key: 'monthlyBenefit', label: 'Beneficio mensual', format: money },
+      { key: 'implementationCosts', label: 'Costos de implementación', format: money },
+      { key: 'devices', label: 'Dispositivos', format: money },
+      { key: 'forkliftStructure', label: 'Estructura de montacargas', format: money },
+      { key: 'warehouseSignage', label: 'Señalización', format: money },
+      { key: 'labels', label: 'Etiquetas', format: money },
+      { key: 'labelPrintersLabelers', label: 'Impresoras / Etiquetadoras', format: money },
+      { key: 'manualLabeling', label: 'Etiquetado manual', format: money },
+      { key: 'wifiFull', label: 'WiFi Full', format: money },
+      { key: 'wifiFullOptimized', label: 'WiFi Optimizado', format: money },
+      { key: 'wifiPrioritized', label: 'WiFi Priorizado', format: money },
+    ],
+    'country'
+  );
+}
+
+function renderPerSiteScenarioTable(model, result) {
   const rows = model.sites.map((site) => ({
     country: site.country,
     brewery: site.brewery,
@@ -39,7 +75,7 @@ function renderPerSiteTable(model, result) {
     [
       { key: 'brewery', label: 'Sitio' },
       { key: 'cluster', label: 'Clúster' },
-      { key: 'implementationMXN', label: `Costo de implementación (${state.currency})`, format: (v) => money(v) },
+      { key: 'implementationMXN', label: 'Costo elegido (más barato)', format: (v) => money(v) },
     ],
     'country'
   );
@@ -96,8 +132,18 @@ function render(model, scenarios) {
       </p>
     </div>
 
-    <h2>Costo de implementación por sitio</h2>
-    <div class="panel">${renderPerSiteTable(model, result)}</div>
+    <h2>Desglose de costos por sitio (como lo pide el brief)</h2>
+    <div class="panel">
+      ${renderLiteralBreakdown(model)}
+      <p class="subtitle" style="margin-top:10px;">
+        "WiFi Full", "Optimizado" y "Priorizado" son 3 alternativas — no se suman entre sí, cada sitio elige una
+        (igual con etiquetado manual vs. impresoras). El escenario actual usa la opción más barata de cada sitio;
+        aquí se ven las 3 completas, tal como vienen en el Excel fuente.
+      </p>
+    </div>
+
+    <h2>Costo elegido por sitio (según el escenario)</h2>
+    <div class="panel">${renderPerSiteScenarioTable(model, result)}</div>
 
     <h2>Costo de nómina por rol</h2>
     <div class="panel">
@@ -128,7 +174,7 @@ async function main() {
     const workbook = await loadWorkbook();
     const model = await buildDomainModel(workbook);
     const scenarios = getAllScenarios(model);
-    state.scenarioId = scenarios[0].id;
+    state.scenarioId = (scenarios.find((s) => s.id === 'optimo') ?? scenarios[0]).id;
     render(model, scenarios);
     window.__wmsModel = model;
   } catch (err) {

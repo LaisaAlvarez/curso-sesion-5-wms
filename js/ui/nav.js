@@ -1,11 +1,10 @@
 import { CONFIG } from '../config.js';
 
 const LINKS = [
-  { href: 'index.html', label: 'Programa' },
-  { href: 'sitio.html', label: 'Por Sitio' },
+  { href: 'index.html', label: 'Costos' },
+  { href: 'programa.html', label: 'Programa' },
   { href: 'recursos.html', label: 'Recursos' },
   { href: 'escenarios.html', label: 'Escenarios' },
-  { href: 'costos.html', label: 'Costos' },
   { href: 'informe.html', label: 'Informe Ejecutivo' },
   { href: 'datos.html', label: 'Datos' },
 ];

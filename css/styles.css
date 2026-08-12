@@ -288,6 +288,14 @@ tr.row-recommended:nth-child(even) { background: color-mix(in srgb, var(--status
 .kpi .value.status-critical { color: var(--status-critical); }
 .kpi .value.status-warning { color: color-mix(in srgb, var(--status-warning) 70%, var(--text-primary)); }
 .kpi .sub { color: var(--text-muted); font-size: 11.5px; margin-top: 3px; }
+.kpi .value .sub { font-size: 14px; font-weight: 500; color: var(--text-secondary); margin: 0; }
+
+.kpi-wide { flex-basis: 100%; }
+.kpi-wide .dual-value { display: flex; gap: 32px; margin-top: 6px; }
+.kpi-wide .dual-value .value { font-size: 34px; }
+
+.kpi-hero { background: color-mix(in srgb, var(--series-mexico) 7%, var(--surface-1)); border-color: color-mix(in srgb, var(--series-mexico) 30%, var(--border)); }
+.kpi-hero .value { font-size: 32px; color: var(--series-mexico); }
 
 /* ---------- Leyenda (siempre presente cuando hay 2+ series/estados) ---------- */
 .chart-legend {
@@ -328,6 +336,18 @@ tr.row-recommended:nth-child(even) { background: color-mix(in srgb, var(--status
 .gantt-bar.status-critical { fill: var(--status-critical); }
 .gantt-bar.sin-datos { fill: var(--text-muted); opacity: 0.45; }
 .gantt-milestone { stroke: var(--surface-1); stroke-width: 2; }
+
+.gantt-group-row { cursor: pointer; }
+.gantt-hit-area { fill: transparent; }
+.gantt-group-row:hover .gantt-hit-area { fill: color-mix(in srgb, var(--series-mexico) 6%, transparent); }
+.gantt-toggle { font-size: 10px; fill: var(--text-secondary); }
+.gantt-bracket-line { stroke: currentColor; fill: none; stroke-width: 3; stroke-linecap: round; }
+.gantt-bracket-line.gantt-bar { stroke: var(--series-mexico); }
+.gantt-bracket-line.status-critical { stroke: var(--status-critical); }
+.gantt-bracket-line.status-warning { stroke: var(--status-warning); }
+.gantt-bracket-line.sin-datos { stroke: var(--text-muted); opacity: 0.45; }
+.gantt-connector { stroke: var(--baseline); stroke-width: 1.5; }
+.gantt-connector-arrow { fill: var(--baseline); }
 
 /* ---------- Banner de error ---------- */
 .error-banner {

@@ -28,8 +28,7 @@ async function main() {
     const evals = scenarios.map((scenario) => ({ scenario, result: evaluateScenario(model, scenario) }));
 
     const actual = findByName(evals, 'Actual');
-    const escenario1 = findByName(evals, 'Escenario 1');
-    const fteMinimo = findByName(evals, 'FTE mínimo viable');
+    const atraso40 = findByName(evals, '+40% de atraso');
     const optimo = findByName(evals, 'Óptimo');
 
     const clustersSinDatos = model.clustersWithoutResourceData;
@@ -43,11 +42,9 @@ async function main() {
         ${optimo.result.withinHorizon
           ? `El escenario "Óptimo" que encontramos sí cabe en ${optimo.result.criticalPath.programFinishWeek} semanas
              (${meses(optimo.result.cost.programDurationMonths)}) por ${money(optimo.result.cost.totalCostMXN)}.`
-          : `Búsqueda honesta, resultado incómodo: ni agregando gente hasta el máximo que probamos (5 personas por
-             puesto) logramos meter el programa en 8 meses. Lo más rápido que encontramos son
-             ${optimo.result.criticalPath.programFinishWeek} semanas (${meses(optimo.result.cost.programDurationMonths)})
-             por ${money(optimo.result.cost.totalCostMXN)} — 8 meses puede no ser alcanzable con este alcance de 15
-             sitios en simultáneo, sin importar cuánta gente se contrate dentro de lo que probamos.`}
+          : `Búsqueda honesta, resultado incómodo: ni agregando gente logramos meter el programa en 8 meses. Lo más
+             rápido que encontramos son ${optimo.result.criticalPath.programFinishWeek} semanas
+             (${meses(optimo.result.cost.programDurationMonths)}) por ${money(optimo.result.cost.totalCostMXN)}.`}
       </p>
 
       <h2>¿Cuál es el problema, en español sencillo?</h2>
@@ -71,20 +68,14 @@ async function main() {
         ${(actual.result.criticalPath.programFinishWeek / CONFIG.PROGRAM_HORIZON_WEEKS).toFixed(1)} veces la meta de 8 meses.
       </p>
 
-      <h2>¿Qué pasa si contratamos más gente?</h2>
+      <h2>¿Qué pasa si todo se atrasa 40%?</h2>
       <p>
-        El archivo original ya trae una alternativa ("Escenario 1": 5 personas por puesto en vez de 1). Con eso, el
-        programa sí termina en ${escenario1.result.criticalPath.programFinishWeek} semanas
-        (${meses(escenario1.result.cost.programDurationMonths)}) y sin ningún choque — pero cuesta
-        ${money(escenario1.result.cost.totalCostMXN)}, más que con la gente de hoy, porque estás pagando nómina de
-        mucha más gente.
-      </p>
-      <p>
-        Probamos algo más específico: agregar SOLO lo mínimo necesario para que ninguna bodega, sola, se quede sin
-        gente en su paso más exigente (en la práctica, subir capacitadores de 1 a 3). Eso arregla por completo el
-        problema "una bodega no puede ni sola" (${fteMinimo.result.structural.length} choques estructurales), pero
-        todavía deja ${fteMinimo.result.cross.length} choques por competencia entre bodegas — o sea, no alcanza para
-        que las 15 bodegas avancen en paralelo, solo para que cada una individualmente sea viable.
+        Este escenario no agrega gente ni quita: solo simula que cada una de las 8 fases, en las 15 bodegas, tarda
+        40% más de lo planeado (imprevistos, retrabajos, lo normal en un programa real). Con el headcount de hoy,
+        eso estira el programa a ${atraso40.result.criticalPath.programFinishWeek} semanas
+        (${meses(atraso40.result.cost.programDurationMonths)}) y el costo sube a ${money(atraso40.result.cost.totalCostMXN)}
+        — más nómina, porque la gente sigue contratada más tiempo. Es la prueba de que "Actual" no tiene ningún
+        colchón: cualquier atraso real empeora un plan que ya de por sí no cumplía la meta.
       </p>
 
       <h2>La recomendación: escenario "Óptimo"</h2>
@@ -95,25 +86,24 @@ async function main() {
           ? `Esto cuesta ${money(optimo.result.cost.totalCostMXN)} y termina en
              ${meses(optimo.result.cost.programDurationMonths)} — cumple la meta de tiempo con el menor gasto que
              encontramos que la cumple.`
-          : `No encontramos, dentro de lo que probamos (hasta 5 personas por puesto), ninguna combinación que
-             cumpliera la meta de 8 meses. La recomendación honesta con estos datos es: o se negocia con Dirección
-             un plazo mayor a 8 meses, o se reduce cuántos sitios corren en simultáneo (por ejemplo, dividir el
-             programa en dos oleadas), o se busca contratar bastante más allá de 5 personas por puesto — cada una de
-             esas tres rutas se puede probar directamente en la pestaña Recursos.`}
+          : `No encontramos ninguna combinación que cumpliera la meta de 8 meses. La recomendación honesta con estos
+             datos es: o se negocia con Dirección un plazo mayor a 8 meses, o se reduce cuántos sitios corren en
+             simultáneo (por ejemplo, dividir el programa en dos oleadas) — ambas rutas se pueden probar
+             directamente en la pestaña Recursos.`}
       </p>
 
       <h2>Cómo leer el resto de la herramienta</h2>
       <ul>
-        <li><strong>Programa</strong>: el calendario completo de las 15 bodegas, agrupadas por país, con la bodega
-          que más tarda resaltada (esa es la que define cuándo termina todo el programa).</li>
-        <li><strong>Por Sitio</strong>: el detalle de una sola bodega — sus 8 pasos, cuánto dura cada uno, y qué
-          gente necesita.</li>
+        <li><strong>Costos</strong> (portada): cuánto cuesta cada bodega (desglosado tal como lo pide el brief:
+          dispositivos, montacargas, señalización, etiquetas, y las 3 opciones de WiFi) y cada puesto (nómina), en
+          pesos o dólares, más el retorno de inversión.</li>
+        <li><strong>Programa</strong>: el calendario completo de las 15 bodegas, agrupadas por país. Da clic en
+          cualquier bodega para desplegar sus 8 fases y ver qué gente consume cada una — la bodega en rojo es la
+          que más tarda, y por eso es la que define cuándo termina todo el programa.</li>
         <li><strong>Recursos</strong>: aquí se puede subir o bajar cuánta gente hay por puesto, y ver al instante
           cómo cambian los choques, la duración y el costo.</li>
-        <li><strong>Escenarios</strong>: compara los 8 escenarios pedidos lado a lado, y permite guardar/exportar
-          los tuyos.</li>
-        <li><strong>Costos</strong>: cuánto cuesta cada bodega (implementación) y cada puesto (nómina), en pesos o
-          dólares.</li>
+        <li><strong>Escenarios</strong>: compara Actual, +40% de atraso, y Óptimo lado a lado, y permite
+          guardar/exportar escenarios propios.</li>
         <li><strong>Datos</strong>: las 6 pestañas del Excel original, tal como se leyeron, con cualquier hueco de
           información marcado con claridad.</li>
       </ul>
@@ -123,12 +113,14 @@ async function main() {
         <li>${sitiosSinDatos.join(', ') || 'Ningún sitio'} (clúster ${clustersSinDatos.join(', ')}) no tiene datos de
           qué gente consume en el Excel original — se excluye del cálculo de choques/costo de nómina en vez de
           inventar un número.</li>
-        <li>El escenario "Óptimo" viene de una búsqueda simple (probar más gente poco a poco hasta que alcance),
-          no de un optimizador matemático — es un muy buen punto de partida, no la certeza absoluta de que no existe
-          nada mejor.</li>
+        <li>El escenario "Óptimo" viene de una búsqueda greedy en 2 fases (agregar gente al rol más problemático,
+          luego podar el exceso), no de un optimizador matemático exacto — es un muy buen punto de partida, no la
+          certeza absoluta de que no existe nada mejor.</li>
         <li>El calendario de cada escenario lo propone una heurística automática (empezar por la bodega más pesada
           en consumo de recursos) — es ajustable a mano en la pestaña Recursos, no es la única forma de acomodar
           las 15 bodegas.</li>
+        <li>El brief original pedía 8 escenarios distintos; por decisión de Laisa esta versión se quedó con 3
+          (Actual, +40% de atraso, Óptimo) para no saturar la comparación.</li>
       </ul>
     `;
   } catch (err) {

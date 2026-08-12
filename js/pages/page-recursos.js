@@ -89,7 +89,21 @@ function renderDemandTable(model, result) {
 }
 
 function renderLegendInline() {
-  return `<div class="chart-legend"><span class="legend-item"><span class="swatch status-critical"></span>Semana con choque (demanda &gt; oferta)</span></div>`;
+  return `<div class="chart-legend"><span class="legend-item"><span class="swatch status-critical"></span>Semana con choque (se necesita más gente de la que hay)</span></div>`;
+}
+
+function renderDemandExplainer() {
+  return `
+    <div class="warning-item info" style="margin-bottom:14px;">
+      <span class="code">Cómo leer esta tabla</span>
+      Cada <strong>fila</strong> es un rol (ej. "Líder de Azure"). Cada <strong>columna</strong> es una semana del
+      programa. El número dentro de cada celda es cuánta gente de ESE rol se necesita en ESA semana, sumando
+      <strong>todos los sitios</strong> que en ese momento estén corriendo una fase que use a ese rol — no es la
+      gente que hay, es la gente que se está pidiendo. Compáralo contra el "Headcount a usar" de la tabla de arriba:
+      si el número pedido es mayor a la gente contratada, la celda se pinta de rojo — significa que esa semana, ese
+      rol, no alcanza para atender a todos los sitios que lo necesitan al mismo tiempo.
+    </div>
+  `;
 }
 
 function attachHandlers() {
@@ -143,8 +157,11 @@ function render() {
     <h2>Headcount por rol</h2>
     <div class="panel">${renderFteTable(model, currentScenario, overrides)}</div>
 
-    <h2>Demanda semanal vs. oferta</h2>
-    <div class="panel">${renderDemandTable(model, result)}</div>
+    <h2>¿Qué rol se queda corto, y en qué semana?</h2>
+    <div class="panel">
+      ${renderDemandExplainer()}
+      ${renderDemandTable(model, result)}
+    </div>
   `;
 
   attachHandlers();
