@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "escenario-1",
+  "name": "Escenario 1",
+  "description": "El escenario alterno que ya trae el Excel fuente (5 personas por rol).",
+  "fteBase": "Escenario 1",
+  "fteOverrides": {},
+  "delayPct": 0,
+  "maturityByCluster": { "1": "A", "2": "A", "3": "A", "4": "A" }
+}

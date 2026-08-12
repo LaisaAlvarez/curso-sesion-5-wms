@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "actual",
+  "name": "Actual",
+  "description": "Headcount de hoy, sin atraso. Punto de partida real.",
+  "fteBase": "Actual",
+  "fteOverrides": {},
+  "delayPct": 0,
+  "maturityByCluster": { "1": "A", "2": "A", "3": "A", "4": "A" }
+}

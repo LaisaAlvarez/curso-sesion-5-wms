@@ -11,17 +11,24 @@
 import { computeSiteTimeline } from './timeline.js';
 import { computeWeeklyDemand, detectConflicts } from './conflicts.js';
 
-function isCrossSiteConflict(conflict) {
-  const sites = new Set(conflict.contributors.map((c) => c.site));
-  return sites.size > 1;
-}
-
-export function crossSiteConflicts(conflicts) {
-  return conflicts.filter(isCrossSiteConflict);
+// Definicion correcta (la version anterior, "cuantos sitios contribuyen",
+// fusionaba mal dos choques estructurales independientes que caian en la
+// misma semana por casualidad, etiquetandolos como "por traslape"). La
+// definicion correcta: un choque es ESTRUCTURAL si basta la contribucion de
+// UN SOLO sitio (su propio consumo en esa fase) para ya exceder la oferta -
+// ese choque existe sin importar el calendario. Si ningun contribuyente por
+// si solo excede la oferta, y solo la SUMA de 2+ sitios la excede, es un
+// choque POR TRASLAPE - genuinamente evitable moviendo fechas.
+function isSelfSufficientConflict(conflict) {
+  return conflict.contributors.some((c) => c.fraction > conflict.supply + 1e-9);
 }
 
 export function structuralConflicts(conflicts) {
-  return conflicts.filter((c) => !isCrossSiteConflict(c));
+  return conflicts.filter(isSelfSufficientConflict);
+}
+
+export function crossSiteConflicts(conflicts) {
+  return conflicts.filter((c) => !isSelfSufficientConflict(c));
 }
 
 function resourceIntensity(model, site, maturity) {

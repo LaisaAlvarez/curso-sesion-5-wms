@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "atraso-10",
+  "name": "+10% de atraso",
+  "description": "Headcount Actual, pero cada fase dura 10% mas de lo planeado.",
+  "fteBase": "Actual",
+  "fteOverrides": {},
+  "delayPct": 10,
+  "maturityByCluster": { "1": "A", "2": "A", "3": "A", "4": "A" }
+}
