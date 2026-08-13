@@ -17,6 +17,7 @@ export function evaluateScenario(model, scenario) {
     maturityByCluster,
     delayPct: scenario.delayPct ?? 0,
     horizonWeeks: CONFIG.PROGRAM_HORIZON_WEEKS,
+    siteStartWeekOverrides: scenario.siteStartWeekOverrides ?? {},
   });
 
   const allConflicts = detectConflicts(computeWeeklyDemand(model, timelines), headcountByRole);

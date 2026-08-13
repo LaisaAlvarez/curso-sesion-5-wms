@@ -4,6 +4,8 @@ import { buildDomainModel } from '../data/schema.js';
 import { evaluateScenario } from '../state/store.js';
 import { getAllScenarios } from '../domain/scenario-presets.js';
 import { buildWeeklyDemandTable } from '../domain/conflicts.js';
+import { computeSiteResourceUsage } from '../domain/timeline.js';
+import { groupByCountry } from '../ui/country-groups.js';
 import { saveCustomScenario } from '../state/persistence.js';
 import { CONFIG } from '../config.js';
 
@@ -14,7 +16,11 @@ function fmtMoney(v) {
   return '$' + Math.round(v).toLocaleString('es-MX');
 }
 
-let state = null; // { model, scenarios, currentScenario, overrides }
+function fmtNum(v) {
+  return Number.isInteger(v) ? String(v) : v.toFixed(2);
+}
+
+let state = null; // { model, scenarios, currentScenario, overrides, siteStartWeekOverrides }
 
 function baseHeadcount(model, scenario) {
   const map = {};
@@ -66,6 +72,83 @@ function renderResultSummary(result) {
   `;
 }
 
+// Entregable 3 del brief: "tabla de uso de recursos por sitio Y general
+// para el programa. Quiero poder modificar esa tabla" - lo de "general" ya
+// esta arriba (headcount por rol) y abajo (demanda semanal). Esto cubre el
+// "por sitio": cuanto consume cada sitio de cada rol (pico y
+// persona-semanas), y la semana de arranque de CADA sitio, editable a mano
+// (antes solo la heuristica automatica la decidia, sin forma de fijar un
+// sitio especifico).
+function renderSiteUsageSection(model, result) {
+  const countryGroups = groupByCountry(model.sites, 'country');
+  const sections = countryGroups
+    .map(({ country, rows: sitesInCountry }) => {
+      const siteRows = sitesInCountry
+        .map((site) => {
+          const timeline = result.timelines.find((t) => t.site.brewery === site.brewery);
+          const isPinned = state.siteStartWeekOverrides[site.brewery] !== undefined;
+          const usage = computeSiteResourceUsage(model, timeline);
+          const usageRows = usage.length
+            ? usage
+                .map((u) => `<tr><td>${u.role}</td><td>${fmtNum(u.peakConcurrent)}</td><td>${fmtNum(u.personWeeks)}</td></tr>`)
+                .join('')
+            : `<tr><td colspan="3" class="text-muted">Sin datos de recursos (clúster ${site.cluster})</td></tr>`;
+
+          return `
+            <tr>
+              <td>${site.brewery}</td>
+              <td>${site.cluster}</td>
+              <td>
+                <input type="number" min="0" step="1" value="${timeline.startWeek}" data-site="${site.brewery}"
+                       class="site-week-input" style="width:60px; padding:3px 6px; ${isPinned ? 'border-color:var(--series-mexico); border-width:2px;' : ''}" />
+              </td>
+              <td>${timeline.finishWeek}</td>
+              <td>${timeline.finishWeek - timeline.startWeek}</td>
+              <td>
+                <details>
+                  <summary style="cursor:pointer;">${usage.length} rol(es) — ver detalle</summary>
+                  <div class="table-scroll" style="margin-top:6px; max-height:220px;">
+                    <table>
+                      <thead><tr><th>Rol</th><th>Consumo pico</th><th>Persona-semanas</th></tr></thead>
+                      <tbody>${usageRows}</tbody>
+                    </table>
+                  </div>
+                </details>
+              </td>
+            </tr>`;
+        })
+        .join('');
+
+      return `
+        <div class="country-block ${country === 'Mexico' ? 'mexico' : 'colombia'}">
+          <span class="country-label">${country === 'Mexico' ? 'México' : country} (${sitesInCountry.length})</span>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th>Sitio</th><th>Clúster</th><th>Semana arranque</th><th>Semana fin</th><th>Duración</th><th>Consumo por rol</th></tr></thead>
+              <tbody>${siteRows}</tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    })
+    .join('');
+
+  const pinnedCount = Object.keys(state.siteStartWeekOverrides).length;
+
+  return `
+    <div class="warning-item info" style="margin-bottom:14px;">
+      <span class="code">Cómo usar esta tabla</span>
+      "Consumo pico" es la fracción más alta de ese rol que el sitio pide en UNA sola fase (eso es lo que compite
+      con otros sitios). "Persona-semanas" es cuánto "pesa" ese sitio para ese rol en todo su recorrido (duración ×
+      fracción, sumado en sus 8 fases). "Semana de arranque" la propone la heurística automática, pero puedes
+      escribir la que quieras — el sitio se queda fijo ahí y el resto se reacomoda alrededor tuyo.
+      ${pinnedCount ? `<br/><strong>${pinnedCount} sitio(s) con semana fijada a mano</strong> (borde azul). ` : ''}
+      ${pinnedCount ? `<button id="reset-pins-btn" style="margin-left:6px;">Quitar todos los ajustes manuales</button>` : ''}
+    </div>
+    ${sections}
+  `;
+}
+
 function renderDemandTable(model, result) {
   const table = buildWeeklyDemandTable(model, result.timelines, result.headcountByRole);
   const maxWeeks = Math.min(result.criticalPath.programFinishWeek, 60);
@@ -98,10 +181,9 @@ function renderDemandExplainer() {
       <span class="code">Cómo leer esta tabla</span>
       Cada <strong>fila</strong> es un rol (ej. "Líder de Azure"). Cada <strong>columna</strong> es una semana del
       programa. El número dentro de cada celda es cuánta gente de ESE rol se necesita en ESA semana, sumando
-      <strong>todos los sitios</strong> que en ese momento estén corriendo una fase que use a ese rol — no es la
-      gente que hay, es la gente que se está pidiendo. Compáralo contra el "Headcount a usar" de la tabla de arriba:
-      si el número pedido es mayor a la gente contratada, la celda se pinta de rojo — significa que esa semana, ese
-      rol, no alcanza para atender a todos los sitios que lo necesitan al mismo tiempo.
+      <strong>todos los sitios</strong> (esta es la vista "general" del programa — la de arriba es la vista "por
+      sitio"). No es la gente que hay, es la gente que se está pidiendo. Compáralo contra el "Headcount a usar":
+      si el número pedido es mayor a la gente contratada, la celda se pinta de rojo — ese rol no alcanza esa semana.
     </div>
   `;
 }
@@ -110,6 +192,7 @@ function attachHandlers() {
   document.getElementById('scenario-select').addEventListener('change', (e) => {
     state.currentScenario = state.scenarios.find((s) => s.id === e.target.value);
     state.overrides = { ...state.currentScenario.fteOverrides };
+    state.siteStartWeekOverrides = { ...(state.currentScenario.siteStartWeekOverrides ?? {}) };
     render();
   });
 
@@ -123,6 +206,23 @@ function attachHandlers() {
     });
   });
 
+  document.querySelectorAll('.site-week-input').forEach((input) => {
+    input.addEventListener('change', (e) => {
+      const site = e.target.dataset.site;
+      const val = Math.max(0, Math.round(Number(e.target.value) || 0));
+      state.siteStartWeekOverrides[site] = val;
+      render();
+    });
+  });
+
+  const resetBtn = document.getElementById('reset-pins-btn');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      state.siteStartWeekOverrides = {};
+      render();
+    });
+  }
+
   document.getElementById('save-scenario-btn').addEventListener('click', () => {
     const name = prompt('¿Cómo quieres nombrar este escenario?', `${state.currentScenario.name} (editado)`);
     if (!name) return;
@@ -131,6 +231,7 @@ function attachHandlers() {
       id: `custom-${Date.now()}`,
       name,
       fteOverrides: state.overrides,
+      siteStartWeekOverrides: state.siteStartWeekOverrides,
     };
     saveCustomScenario(toSave);
     alert('Escenario guardado en este navegador. Puedes exportarlo a archivo desde la pestaña Escenarios.');
@@ -138,8 +239,8 @@ function attachHandlers() {
 }
 
 function render() {
-  const { model, currentScenario, overrides } = state;
-  const scenarioForEval = { ...currentScenario, fteOverrides: overrides };
+  const { model, currentScenario, overrides, siteStartWeekOverrides } = state;
+  const scenarioForEval = { ...currentScenario, fteOverrides: overrides, siteStartWeekOverrides };
   const result = evaluateScenario(model, scenarioForEval);
 
   content.innerHTML = `
@@ -151,13 +252,16 @@ function render() {
       <button id="save-scenario-btn" style="margin-left:12px;">Guardar como nuevo escenario</button>
     </div>
 
-    <h2>Resultado con este headcount</h2>
+    <h2>Resultado con este headcount y calendario</h2>
     <div class="panel">${renderResultSummary(result)}</div>
 
-    <h2>Headcount por rol</h2>
+    <h2>Headcount por rol (general)</h2>
     <div class="panel">${renderFteTable(model, currentScenario, overrides)}</div>
 
-    <h2>¿Qué rol se queda corto, y en qué semana?</h2>
+    <h2>Uso de recursos y calendario por sitio</h2>
+    <div class="panel">${renderSiteUsageSection(model, result)}</div>
+
+    <h2>¿Qué rol se queda corto, y en qué semana? (general)</h2>
     <div class="panel">
       ${renderDemandExplainer()}
       ${renderDemandTable(model, result)}
@@ -174,7 +278,13 @@ async function main() {
     const model = await buildDomainModel(workbook);
     const scenarios = getAllScenarios(model);
 
-    state = { model, scenarios, currentScenario: scenarios[0], overrides: { ...scenarios[0].fteOverrides } };
+    state = {
+      model,
+      scenarios,
+      currentScenario: scenarios[0],
+      overrides: { ...scenarios[0].fteOverrides },
+      siteStartWeekOverrides: { ...(scenarios[0].siteStartWeekOverrides ?? {}) },
+    };
     render();
     window.__wmsModel = model;
   } catch (err) {

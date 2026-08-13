@@ -50,6 +50,19 @@ Con el headcount "Actual" (casi 1 persona por rol), el programa no cabe en 8 mes
 una combinación que cabe en 8 meses sin choques. El detalle y la recomendación completa están en
 `informe.html`.
 
+### Resultado del escenario "Óptimo" — snapshot verificado (evidencia estática)
+
+No hace falta correr la app para verificar esta cifra — quedó documentada aquí y en `informe.html`,
+que la compara contra el cálculo en vivo cada vez que se abre (si algún día no coinciden, es porque
+los datos fuente o el motor cambiaron desde esta verificación):
+
+| Verificado el | Duración | Costo total | Gente (FTE) | Choques |
+|---|---|---|---|---|
+| 2026-08-12 | 34 semanas (7.8 meses) | $112,651,960 MXN ($6,258,442 USD) | 96 | 0 |
+
+Este número vive también en código, como constante (`js/config.js`, `CONFIG.VERIFIED_OPTIMO_SNAPSHOT`),
+no solo en este README — para que el chequeo automático en `informe.html` tenga algo contra qué comparar.
+
 ## Estado
 
 Los 8 hitos de construcción están completos (ver historial de commits) y publicados en GitHub Pages.

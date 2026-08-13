@@ -20,6 +20,40 @@ function findByName(evals, name) {
   return evals.find((e) => e.scenario.name === name);
 }
 
+// Evidencia dura para quien lea el repo sin correr la app (pedido explicito
+// del profesor): un snapshot congelado del escenario Optimo, comparado
+// contra el calculo en vivo de ahora mismo. Si no coinciden, se marca como
+// discrepancia en vez de ocultarlo - eso significa que los datos fuente o
+// el motor cambiaron desde que se verifico el snapshot.
+function renderSnapshotComparison(optimoResult) {
+  const snap = CONFIG.VERIFIED_OPTIMO_SNAPSHOT;
+  const liveWeeks = optimoResult.criticalPath.programFinishWeek;
+  const liveCost = Math.round(optimoResult.cost.totalCostMXN);
+  const liveFte = Object.values(optimoResult.headcountByRole).reduce((a, b) => a + b, 0);
+
+  const matches = liveWeeks === snap.programFinishWeek && liveCost === snap.totalCostMXN && liveFte === snap.totalHeadcount;
+
+  return `
+    <div class="panel" style="border-left:4px solid ${matches ? 'var(--status-good)' : 'var(--status-critical)'};">
+      <p style="margin:0 0 8px; font-weight:650;">
+        Evidencia estática del escenario Óptimo (no depende de correr la app) — verificada el ${snap.verifiedOn}:
+      </p>
+      <table style="margin-bottom:8px;">
+        <thead><tr><th></th><th>Duración</th><th>Costo total</th><th>Gente (FTE)</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Snapshot documentado</strong></td><td>${snap.programFinishWeek} sem (${snap.programDurationMonths} meses)</td><td>${money(snap.totalCostMXN)} (${'$' + snap.totalCostUSD.toLocaleString('es-MX')} USD)</td><td>${snap.totalHeadcount}</td></tr>
+          <tr><td><strong>Cálculo en vivo (ahora)</strong></td><td>${liveWeeks} sem</td><td>${money(liveCost)}</td><td>${liveFte}</td></tr>
+        </tbody>
+      </table>
+      <p class="${matches ? 'status-good-text' : 'status-critical-text'}" style="margin:0;">
+        ${matches
+          ? '✓ El cálculo en vivo coincide exactamente con el snapshot documentado.'
+          : '⚠ El cálculo en vivo YA NO coincide con el snapshot — los datos fuente o el motor cambiaron desde la última verificación; hay que revisar antes de confiar en este número.'}
+      </p>
+    </div>
+  `;
+}
+
 async function main() {
   try {
     const workbook = await loadWorkbook();
@@ -46,6 +80,8 @@ async function main() {
              rápido que encontramos son ${optimo.result.criticalPath.programFinishWeek} semanas
              (${meses(optimo.result.cost.programDurationMonths)}) por ${money(optimo.result.cost.totalCostMXN)}.`}
       </p>
+
+      ${renderSnapshotComparison(optimo.result)}
 
       <h2>¿Cuál es el problema, en español sencillo?</h2>
       <p>

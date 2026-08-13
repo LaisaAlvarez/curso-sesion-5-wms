@@ -56,3 +56,25 @@ export function rolesForPhase(model, cluster, phaseName) {
     .filter((a) => a.cluster === cluster && a.phase === phaseName)
     .map((a) => ({ role: a.role, capacityConsumption: a.capacityConsumption }));
 }
+
+// "Uso de recursos por sitio" (entregable 3 del brief: tabla de uso de
+// recursos por sitio y general). Para un sitio, por cada rol que consume en
+// alguna de sus 8 fases: el consumo PICO (la fraccion mas alta que pide en
+// una sola fase - eso es lo que le "compite" a otros sitios) y las
+// persona-semanas totales (duracion x fraccion, sumado sobre sus 8 fases -
+// una medida de cuanto "pesa" ese sitio para ese rol en todo el programa).
+export function computeSiteResourceUsage(model, timeline) {
+  if (!timeline.hasResourceData) return [];
+  const usage = new Map();
+  for (const phase of timeline.phases) {
+    const roles = rolesForPhase(model, timeline.cluster, phase.name);
+    for (const { role, capacityConsumption } of roles) {
+      const fraction = capacityConsumption ?? 0;
+      const entry = usage.get(role) ?? { role, peakConcurrent: 0, personWeeks: 0 };
+      entry.peakConcurrent = Math.max(entry.peakConcurrent, fraction);
+      entry.personWeeks += fraction * phase.durationWeeks;
+      usage.set(role, entry);
+    }
+  }
+  return [...usage.values()].sort((a, b) => b.personWeeks - a.personWeeks);
+}

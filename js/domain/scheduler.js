@@ -44,18 +44,36 @@ function resourceIntensity(model, site, maturity) {
   return intensity;
 }
 
-export function proposeSchedule(model, { headcountByRole, maturityByCluster = {}, delayPct = 0, horizonWeeks = 35 } = {}) {
-  const sitesOrdered = [...model.sites].sort((a, b) => {
+// siteStartWeekOverrides: { 'Site 01': 5, ... } - ajuste manual por sitio
+// (pestania Recursos). Un sitio fijado se coloca EXACTAMENTE en esa semana,
+// sin importar si eso le genera choques - es una decision explicita del
+// usuario, no algo que la heuristica deba "corregir" en silencio. El resto
+// de los sitios (sin override) se siguen acomodando de forma automatica
+// alrededor de los fijados.
+export function proposeSchedule(model, { headcountByRole, maturityByCluster = {}, delayPct = 0, horizonWeeks = 35, siteStartWeekOverrides = {} } = {}) {
+  const placed = [];
+  const startWeekBySite = {};
+  const overflowSites = [];
+  const MAX_WEEK_SEARCH = horizonWeeks * 3;
+
+  const pinnedBreweries = new Set(Object.keys(siteStartWeekOverrides));
+  const pinnedSites = model.sites.filter((s) => pinnedBreweries.has(s.brewery)).sort((a, b) => a.brewery.localeCompare(b.brewery));
+  const autoSites = model.sites.filter((s) => !pinnedBreweries.has(s.brewery));
+
+  for (const site of pinnedSites) {
+    const maturity = maturityByCluster[site.cluster];
+    const week = siteStartWeekOverrides[site.brewery];
+    const timeline = computeSiteTimeline(model, site, { startWeek: week, maturity, delayPct });
+    placed.push(timeline);
+    startWeekBySite[site.brewery] = week;
+  }
+
+  const sitesOrdered = [...autoSites].sort((a, b) => {
     const ia = resourceIntensity(model, a, maturityByCluster[a.cluster]);
     const ib = resourceIntensity(model, b, maturityByCluster[b.cluster]);
     if (ib !== ia) return ib - ia; // mayor intensidad primero
     return a.brewery.localeCompare(b.brewery);
   });
-
-  const placed = [];
-  const startWeekBySite = {};
-  const overflowSites = [];
-  const MAX_WEEK_SEARCH = horizonWeeks * 3;
 
   for (const site of sitesOrdered) {
     const maturity = maturityByCluster[site.cluster];

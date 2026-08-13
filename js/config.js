@@ -48,4 +48,20 @@ export const CONFIG = {
     'Arranque',
     'Hipercuidado',
   ],
+
+  // Snapshot verificado a mano del escenario Optimo (feedback del profesor:
+  // "no hay un numero de costo final documentado de forma estatica para
+  // verificarlo sin correr la app"). NO es el numero que usa la app (esa
+  // sigue calculandolo en vivo, unica fuente de verdad) - es un valor de
+  // referencia congelado para poder comparar: si el numero en vivo alguna
+  // vez no coincide con esto, algo cambio en los datos fuente o en el motor
+  // y hay que investigar antes de confiar en el resultado nuevo.
+  VERIFIED_OPTIMO_SNAPSHOT: {
+    verifiedOn: '2026-08-12',
+    programFinishWeek: 34,
+    programDurationMonths: 7.8,
+    totalCostMXN: 112651960,
+    totalCostUSD: 6258442,
+    totalHeadcount: 96,
+  },
 };
