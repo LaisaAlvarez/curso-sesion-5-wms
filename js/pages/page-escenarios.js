@@ -3,6 +3,7 @@ import { loadWorkbook } from '../data/xlsx-loader.js';
 import { buildDomainModel } from '../data/schema.js';
 import { evaluateScenario } from '../state/store.js';
 import { getAllScenarios } from '../domain/scenario-presets.js';
+import { findWinningScenario } from '../domain/winner.js';
 import { loadCustomScenarios, exportScenarioToFile, importScenarioFromFile, saveCustomScenario } from '../state/persistence.js';
 import { CONFIG } from '../config.js';
 
@@ -14,14 +15,11 @@ function fmtMoney(v) {
 }
 
 function renderComparisonTable(evaluations) {
-  const winningCost = Math.min(
-    ...evaluations.filter((e) => e.result.feasible && e.result.withinHorizon).map((e) => e.result.cost.totalCostMXN),
-    Infinity
-  );
+  const winner = findWinningScenario(evaluations);
 
   const rows = evaluations
     .map(({ scenario, result }) => {
-      const isWinner = result.feasible && result.withinHorizon && result.cost.totalCostMXN === winningCost;
+      const isWinner = winner && scenario.id === winner.scenario.id;
       const feasibleLabel = result.feasible ? 'Sí' : `No (${result.structural.length})`;
       const withinLabel = result.withinHorizon ? 'Sí' : 'No';
       return `

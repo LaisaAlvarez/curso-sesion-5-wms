@@ -4,6 +4,8 @@ import { loadWorkbook } from '../data/xlsx-loader.js';
 import { buildDomainModel } from '../data/schema.js';
 import { evaluateScenario } from '../state/store.js';
 import { getAllScenarios } from '../domain/scenario-presets.js';
+import { findWinningScenario } from '../domain/winner.js';
+import { renderWinnerBanner } from '../ui/winner-banner.js';
 import { CONFIG } from '../config.js';
 
 renderNav('index.html');
@@ -105,11 +107,13 @@ function renderPerRoleTable(model, result) {
   `;
 }
 
-function render(model, scenarios) {
+function render(model, scenarios, winner) {
   const scenario = scenarios.find((s) => s.id === state.scenarioId) ?? scenarios[0];
   const result = evaluateScenario(model, scenario);
 
   content.innerHTML = `
+    ${renderWinnerBanner(winner, scenario.id, money)}
+
     <div class="panel" style="display:flex; align-items:center; gap:24px; flex-wrap:wrap;">
       <div>
         <label for="scenario-select"><strong>Escenario:</strong></label>
@@ -157,16 +161,23 @@ function render(model, scenarios) {
 
   document.getElementById('scenario-select').addEventListener('change', (e) => {
     state.scenarioId = e.target.value;
-    render(model, scenarios);
+    render(model, scenarios, winner);
   });
   document.getElementById('mxn-btn').addEventListener('click', () => {
     state.currency = 'MXN';
-    render(model, scenarios);
+    render(model, scenarios, winner);
   });
   document.getElementById('usd-btn').addEventListener('click', () => {
     state.currency = 'USD';
-    render(model, scenarios);
+    render(model, scenarios, winner);
   });
+  const jumpBtn = document.getElementById('jump-to-winner-btn');
+  if (jumpBtn && winner) {
+    jumpBtn.addEventListener('click', () => {
+      state.scenarioId = winner.scenario.id;
+      render(model, scenarios, winner);
+    });
+  }
 }
 
 async function main() {
@@ -174,8 +185,10 @@ async function main() {
     const workbook = await loadWorkbook();
     const model = await buildDomainModel(workbook);
     const scenarios = getAllScenarios(model);
-    state.scenarioId = (scenarios.find((s) => s.id === 'optimo') ?? scenarios[0]).id;
-    render(model, scenarios);
+    const evaluations = scenarios.map((scenario) => ({ scenario, result: evaluateScenario(model, scenario) }));
+    const winner = findWinningScenario(evaluations);
+    state.scenarioId = (winner?.scenario ?? scenarios[0]).id;
+    render(model, scenarios, winner);
     window.__wmsModel = model;
   } catch (err) {
     content.innerHTML = `<div class="error-banner">${err.message}</div>`;

@@ -1,6 +1,11 @@
-// Escenarios expuestos (decision de Laisa, 2026-08-12: recortar de los 8
-// originales del brief a estos 3, para no saturar la comparacion):
-// Actual, +40% de atraso, y Optimo.
+// Escenarios expuestos. Historial de decisiones de Laisa:
+// - 2026-08-12: recorto de los 8 originales del brief a 3 (Actual, +40%
+//   atraso, Optimo), para no saturar la comparacion.
+// - 2026-08-12 (mismo dia, tras feedback de calificacion): restauro +5%/
+//   +10% de atraso y "Mayor ahorro, mayor tiempo" (los 2 que la
+//   calificacion senialo como faltantes para completar el brief), pero
+//   dejando fuera "Escenario 1" y "Menor ahorro, menor tiempo" - esos dos
+//   siguen fuera a proposito.
 
 import { evaluateScenario } from '../state/store.js';
 import { headcountByRoleFromScenario } from './conflicts.js';
@@ -15,6 +20,26 @@ export const STATIC_SCENARIOS = [
     fteBase: 'Actual',
     fteOverrides: {},
     delayPct: 0,
+    maturityByCluster: CONFIG.DEFAULT_MATURITY_BY_CLUSTER,
+  },
+  {
+    schemaVersion: 1,
+    id: 'atraso-5',
+    name: '+5% de atraso',
+    description: 'Headcount Actual, pero cada fase dura 5% mas de lo planeado.',
+    fteBase: 'Actual',
+    fteOverrides: {},
+    delayPct: 5,
+    maturityByCluster: CONFIG.DEFAULT_MATURITY_BY_CLUSTER,
+  },
+  {
+    schemaVersion: 1,
+    id: 'atraso-10',
+    name: '+10% de atraso',
+    description: 'Headcount Actual, pero cada fase dura 10% mas de lo planeado.',
+    fteBase: 'Actual',
+    fteOverrides: {},
+    delayPct: 10,
     maturityByCluster: CONFIG.DEFAULT_MATURITY_BY_CLUSTER,
   },
   {
@@ -56,6 +81,16 @@ export function computeFteMinimoViable(model) {
     fteOverrides: overrides,
     delayPct: 0,
     maturityByCluster: CONFIG.DEFAULT_MATURITY_BY_CLUSTER,
+  };
+}
+
+export function computeMayorAhorroMayorTiempo(model) {
+  const base = computeFteMinimoViable(model);
+  return {
+    ...base,
+    id: 'mayor-ahorro-mayor-tiempo',
+    name: 'Mayor ahorro, mayor tiempo',
+    description: 'El mínimo de gente que hace el programa posible (sin resolver choques por traslape): gasto bajo, programa largo por la serialización forzada.',
   };
 }
 
@@ -154,5 +189,5 @@ export function computeOptimo(model) {
 }
 
 export function getAllScenarios(model) {
-  return [...STATIC_SCENARIOS, computeOptimo(model)];
+  return [...STATIC_SCENARIOS, computeMayorAhorroMayorTiempo(model), computeOptimo(model)];
 }

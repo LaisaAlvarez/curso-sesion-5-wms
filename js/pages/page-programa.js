@@ -5,6 +5,8 @@ import { loadWorkbook } from '../data/xlsx-loader.js';
 import { buildDomainModel } from '../data/schema.js';
 import { evaluateScenario } from '../state/store.js';
 import { getAllScenarios } from '../domain/scenario-presets.js';
+import { findWinningScenario } from '../domain/winner.js';
+import { renderWinnerBanner } from '../ui/winner-banner.js';
 import { rolesForPhase } from '../domain/timeline.js';
 import { CONFIG } from '../config.js';
 
@@ -142,7 +144,7 @@ function renderConflictDetail(structural, cross) {
 }
 
 function render() {
-  const { model, scenarios, scenarioId } = state;
+  const { model, scenarios, scenarioId, winner } = state;
   const scenario = scenarios.find((s) => s.id === scenarioId) ?? scenarios[0];
   const result = evaluateScenario(model, scenario);
   const { timelines, criticalPath, structural, cross } = result;
@@ -168,6 +170,8 @@ function render() {
   const criticalSites = criticalPath.critical.join(', ');
 
   content.innerHTML = `
+    ${renderWinnerBanner(winner, scenario.id, fmtMoney)}
+
     <div class="panel" style="display:flex; align-items:center; gap:12px;">
       <label for="scenario-select"><strong>Escenario:</strong></label>
       <select id="scenario-select" style="padding:5px 10px;">
@@ -210,13 +214,20 @@ async function main() {
     const workbook = await loadWorkbook();
     const model = await buildDomainModel(workbook);
     const scenarios = getAllScenarios(model);
-    const optimo = scenarios.find((s) => s.id === 'optimo') ?? scenarios[0];
+    const evaluations = scenarios.map((s) => ({ scenario: s, result: evaluateScenario(model, s) }));
+    const winner = findWinningScenario(evaluations);
+    const initialScenario = winner?.scenario ?? scenarios.find((s) => s.id === 'optimo') ?? scenarios[0];
 
-    state = { model, scenarios, scenarioId: optimo.id, expandedSites: new Set() };
+    state = { model, scenarios, scenarioId: initialScenario.id, expandedSites: new Set(), winner };
 
     // Delegacion de eventos: el contenido se re-renderiza completo en cada
     // toggle/cambio, asi que los listeners van en el contenedor estable.
     content.addEventListener('click', (e) => {
+      if (e.target.id === 'jump-to-winner-btn' && state.winner) {
+        state.scenarioId = state.winner.scenario.id;
+        render();
+        return;
+      }
       const groupRow = e.target.closest('.gantt-group-row');
       if (!groupRow) return;
       const siteId = groupRow.dataset.groupId;
