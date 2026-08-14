@@ -2,10 +2,14 @@
 // - 2026-08-12: recorto de los 8 originales del brief a 3 (Actual, +40%
 //   atraso, Optimo), para no saturar la comparacion.
 // - 2026-08-12 (mismo dia, tras feedback de calificacion): restauro +5%/
-//   +10% de atraso y "Mayor ahorro, mayor tiempo" (los 2 que la
-//   calificacion senialo como faltantes para completar el brief), pero
-//   dejando fuera "Escenario 1" y "Menor ahorro, menor tiempo" - esos dos
-//   siguen fuera a proposito.
+//   +10% de atraso y "Mayor ahorro, mayor tiempo", dejando fuera
+//   "Escenario 1" y "Menor ahorro, menor tiempo".
+// - 2026-08-12 (mismo dia, segunda ronda de calificacion): restauro
+//   "Escenario 1" - el brief lo exige explicitamente ("Tanto Actual como
+//   Escenario 1 tienen que poder cargarse y calcularse"), no era opcional
+//   recortarlo aunque el motor ya soportara fteBase 'Escenario 1'
+//   internamente sin exponerlo en la UI. "Menor ahorro, menor tiempo"
+//   sigue fuera a proposito (nadie lo pidio de vuelta).
 
 import { evaluateScenario } from '../state/store.js';
 import { headcountByRoleFromScenario } from './conflicts.js';
@@ -18,6 +22,16 @@ export const STATIC_SCENARIOS = [
     name: 'Actual',
     description: 'Headcount de hoy, sin atraso. Punto de partida real.',
     fteBase: 'Actual',
+    fteOverrides: {},
+    delayPct: 0,
+    maturityByCluster: CONFIG.DEFAULT_MATURITY_BY_CLUSTER,
+  },
+  {
+    schemaVersion: 1,
+    id: 'escenario-1',
+    name: 'Escenario 1',
+    description: 'El escenario alterno que ya trae el Excel fuente (5 personas por rol) - requisito explícito del brief.',
+    fteBase: 'Escenario 1',
     fteOverrides: {},
     delayPct: 0,
     maturityByCluster: CONFIG.DEFAULT_MATURITY_BY_CLUSTER,

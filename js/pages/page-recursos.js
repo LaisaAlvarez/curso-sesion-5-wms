@@ -6,7 +6,7 @@ import { getAllScenarios } from '../domain/scenario-presets.js';
 import { buildWeeklyDemandTable } from '../domain/conflicts.js';
 import { computeSiteResourceUsage } from '../domain/timeline.js';
 import { groupByCountry } from '../ui/country-groups.js';
-import { saveCustomScenario } from '../state/persistence.js';
+import { saveCustomScenario, exportScenarioToFile } from '../state/persistence.js';
 import { CONFIG } from '../config.js';
 
 renderNav('recursos.html');
@@ -234,7 +234,11 @@ function attachHandlers() {
       siteStartWeekOverrides: state.siteStartWeekOverrides,
     };
     saveCustomScenario(toSave);
-    alert('Escenario guardado en este navegador. Puedes exportarlo a archivo desde la pestaña Escenarios.');
+    // Ademas de localStorage, se descarga el .json de una vez - un paso
+    // menos para que quede versionado en git (scenarios/) en vez de vivir
+    // solo en el navegador de quien lo creo.
+    exportScenarioToFile(toSave);
+    alert('Escenario guardado en este navegador Y descargado como .json — muévelo a la carpeta scenarios/ si quieres que quede versionado en el repo.');
   });
 }
 
