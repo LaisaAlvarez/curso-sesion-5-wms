@@ -24,7 +24,15 @@ export const CONFIG = {
   // dinamicamente (no esta hardcodeado aqui) y lo expone en dataWarnings[]; el
   // motor de choques/costo de recursos excluye esos clusters del calculo.
 
-  DEFAULT_MATURITY_BY_CLUSTER: { 1: 'A', 2: 'A', 3: 'A', 4: 'A' },
+  // Verificado contra el Excel (2026-08-12): Madurez B NUNCA dura mas que A
+  // para ningun cluster, y es mas corta en clusters 1 (19->15 semanas) y 2
+  // (16->15) - clusters 3 y 4 dan lo mismo en A o B. El consumo de recursos
+  // por fase (Asignacion de Recursos por Fase) esta indexado solo por
+  // Cluster+Fase+Rol, NO por madurez - la misma fraccion de gente en menos
+  // semanas = menos persona-semanas totales, sin inventar ni quitar nada.
+  // Antes esto usaba 'A' en todos lados por suposicion, nunca verificado -
+  // eso dejaba tiempo (y costo de nomina) gratis sobre la mesa.
+  DEFAULT_MATURITY_BY_CLUSTER: { 1: 'B', 2: 'B', 3: 'B', 4: 'B' },
 
   // "WiFi Completo" / "WiFi Completo Optimizado" / "WiFi Priorizado" y
   // "Impresoras de Etiquetas / Etiquetadoras" / "Etiquetado Manual" son
@@ -60,8 +68,8 @@ export const CONFIG = {
     verifiedOn: '2026-08-12',
     programFinishWeek: 34,
     programDurationMonths: 7.8,
-    totalCostMXN: 112651960,
-    totalCostUSD: 6258442,
-    totalHeadcount: 96,
+    totalCostMXN: 104911729,
+    totalCostUSD: 5828429,
+    totalHeadcount: 71,
   },
 };

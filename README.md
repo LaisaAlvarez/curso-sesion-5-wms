@@ -39,7 +39,8 @@ Y abrir `http://localhost:8080/` en el navegador.
 - `programa.html` — calendario de los 15 sitios agrupados por país, ruta crítica resaltada. Clic en
   un sitio despliega sus 8 fases con conectores (estilo Gantt de Microsoft Project).
 - `recursos.html` — tabla editable de headcount por rol, con demanda semanal en vivo.
-- `escenarios.html` — comparativo de Actual, +40% de atraso, y Óptimo; export/import de escenarios propios.
+- `escenarios.html` — comparativo de Actual, Escenario 1, tres niveles de atraso, Mayor ahorro/mayor
+  tiempo, y Óptimo; export/import de escenarios propios.
 - `informe.html` — resumen ejecutivo en lenguaje llano, con hallazgos y recomendación.
 - `datos.html` — explorador de las 6 pestañas del Excel fuente, con advertencias de calidad de datos.
 
@@ -58,7 +59,11 @@ los datos fuente o el motor cambiaron desde esta verificación):
 
 | Verificado el | Duración | Costo total | Gente (FTE) | Choques |
 |---|---|---|---|---|
-| 2026-08-12 | 34 semanas (7.8 meses) | $112,651,960 MXN ($6,258,442 USD) | 96 | 0 |
+| 2026-08-12 | 34 semanas (7.8 meses) | $104,911,729 MXN ($5,828,429 USD) | 71 | 0 |
+
+(Este número bajó de $112,651,960 MXN / 96 personas a $104,911,729 / 71 personas el mismo día, tras
+descubrir que "Madurez B" nunca es más lenta que "A" para ningún clúster — la app usaba "A" en todo
+por una suposición nunca verificada. Ver `js/config.js`.)
 
 Este número vive también en código, como constante (`js/config.js`, `CONFIG.VERIFIED_OPTIMO_SNAPSHOT`),
 no solo en este README — para que el chequeo automático en `informe.html` tenga algo contra qué comparar.
